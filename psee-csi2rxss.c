@@ -844,9 +844,6 @@ static int xcsi2rxss_enum_mbus_code(struct v4l2_subdev *sd,
 static int g_register(struct v4l2_subdev *sd, struct v4l2_dbg_register *reg) {
 	struct xcsi2rxss_state *state = to_xcsi2rxssstate(sd);
 
-	if (reg->size && reg->size != 4)
-		return -EINVAL;
-
 	/* check if the address is aligned */
 	if (reg->reg & 3ul)
 		return -EINVAL;
@@ -856,14 +853,12 @@ static int g_register(struct v4l2_subdev *sd, struct v4l2_dbg_register *reg) {
 		return -EINVAL;
 
 	reg->val = xcsi2rxss_read(state, reg->reg);
+	reg->size = 4;
 	return 0;
 }
 
 static int s_register(struct v4l2_subdev *sd, const struct v4l2_dbg_register *reg) {
 	struct xcsi2rxss_state *state = to_xcsi2rxssstate(sd);
-
-	if (reg->size && reg->size != 4)
-		return -EINVAL;
 
 	/* check if the address is aligned */
 	if (reg->reg & 3ul)
