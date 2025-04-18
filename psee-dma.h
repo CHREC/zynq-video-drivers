@@ -42,9 +42,14 @@ struct psee_pipeline {
 	struct psee_dma *output;
 };
 
-static inline struct psee_pipeline *to_psee_pipeline(struct media_entity *e)
+static inline struct psee_pipeline *to_psee_pipeline(struct video_device *vdev)
 {
-	return container_of(e->pipe, struct psee_pipeline, pipe);
+	struct media_pipeline *pipe = video_device_pipeline(vdev);
+
+	if (!pipe)
+		return NULL;
+
+	return container_of(pipe, struct psee_pipeline, pipe);
 }
 
 /**

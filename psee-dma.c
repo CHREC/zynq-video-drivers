@@ -130,7 +130,7 @@ remote_subdev(struct media_pad *local, u32 *pad)
 {
 	struct media_pad *remote;
 
-	remote = media_entity_remote_pad(local);
+	remote = media_pad_remote_pad_first(local);
 	if (!remote || !is_media_entity_v4l2_subdev(remote->entity))
 		return NULL;
 
@@ -200,7 +200,7 @@ static int start_stop_recursive(struct media_entity *entity, bool start)
 		/* Get the remote entity (it is assumed that ther is only one
 		 * active link for this pad
 		 */
-		remote = media_entity_remote_pad(pad);
+		remote = media_pad_remote_pad_first(pad);
 		if (!remote) {
 			dev_dbg(dev, "pad[%d] of %s has no active remote",
 				pad->index, entity->name);
@@ -269,7 +269,7 @@ static int psee_pipeline_start_stop(struct psee_pipeline *pipe, bool start)
 	/* The video device is handled in start_streaming, start operation on
 	 * the first remote entity
 	 */
-	pad = media_entity_remote_pad(&dma->pad);
+	pad = media_pad_remote_pad_first(&dma->pad);
 	if (!pad)
 		return -ENODEV;
 	return start_stop_recursive(pad->entity, start);
@@ -326,31 +326,19 @@ done:
 static int psee_pipeline_validate(struct psee_pipeline *pipe,
 				  struct psee_dma *start)
 {
-	struct media_graph graph;
-	struct media_entity *entity = &start->video.entity;
-	struct media_device *mdev = entity->graph_obj.mdev;
+	struct media_pipeline_pad_iter iter;
 	unsigned int num_inputs = 0;
 	unsigned int num_outputs = 0;
-	int ret;
+	struct media_pad *pad;
 
-	mutex_lock(&mdev->graph_mutex);
-
-	/* Walk the graph to locate the video nodes. */
-	ret = media_graph_walk_init(&graph, mdev);
-	if (ret) {
-		mutex_unlock(&mdev->graph_mutex);
-		return ret;
-	}
-
-	media_graph_walk_start(&graph, entity);
-
-	while ((entity = media_graph_walk_next(&graph))) {
+	/* Locate the video nodes in the pipeline. */
+	media_pipeline_for_each_pad(&pipe->pipe, &iter, pad) {
 		struct psee_dma *dma;
 
-		if (entity->function != MEDIA_ENT_F_IO_V4L)
+		if (pad->entity->function != MEDIA_ENT_F_IO_V4L)
 			continue;
 
-		dma = to_psee_dma(media_entity_to_video_device(entity));
+		dma = to_psee_dma(media_entity_to_video_device(pad->entity));
 
 		if (dma->pad.flags & MEDIA_PAD_FL_SINK) {
 			pipe->output = dma;
@@ -359,10 +347,6 @@ static int psee_pipeline_validate(struct psee_pipeline *pipe,
 			num_inputs++;
 		}
 	}
-
-	mutex_unlock(&mdev->graph_mutex);
-
-	media_graph_walk_cleanup(&graph);
 
 	/* We need exactly one output and zero or one input. */
 	if (num_outputs != 1 || num_inputs > 1)
@@ -552,10 +536,9 @@ static int start_streaming(struct vb2_queue *vq, unsigned int count)
 	 * Use the pipeline object embedded in the first DMA object that starts
 	 * streaming.
 	 */
-	pipe = dma->video.entity.pipe
-	     ? to_psee_pipeline(&dma->video.entity) : &dma->pipe;
+	pipe = to_psee_pipeline(&dma->video) ? : &dma->pipe;
 
-	ret = media_pipeline_start(&dma->video.entity, &pipe->pipe);
+	ret = video_device_pipeline_start(&dma->video, &pipe->pipe);
 	if (ret < 0)
 		goto error;
 
@@ -588,7 +571,7 @@ static int start_streaming(struct vb2_queue *vq, unsigned int count)
 	return 0;
 
 error_stop:
-	media_pipeline_stop(&dma->video.entity);
+	video_device_pipeline_stop(&dma->video);
 
 error:
 	/* Give back all queued buffers to videobuf2. */
@@ -605,7 +588,7 @@ error:
 static void stop_streaming(struct vb2_queue *vq)
 {
 	struct psee_dma *dma = vb2_get_drv_priv(vq);
-	struct psee_pipeline *pipe = to_psee_pipeline(&dma->video.entity);
+	struct psee_pipeline *pipe = to_psee_pipeline(&dma->video);
 	struct psee_dma_buffer *buf, *nbuf;
 	union global_ctrl control = { .enable = 0, .clear = 1 };
 
@@ -620,7 +603,7 @@ static void stop_streaming(struct vb2_queue *vq)
 
 	/* Cleanup the pipeline and mark it as being stopped. */
 	psee_pipeline_cleanup(pipe);
-	media_pipeline_stop(&dma->video.entity);
+	video_device_pipeline_stop(&dma->video);
 
 	/* Give back all queued buffers to videobuf2. */
 	spin_lock_irq(&dma->queued_lock);
@@ -1016,9 +999,8 @@ int psee_dma_init(struct psee_composite_device *psee_dev, struct psee_dma *dma,
 	snprintf(name, sizeof(name), "port%u", port);
 	dma->dma = dma_request_chan(dev, name);
 	if (IS_ERR(dma->dma)) {
-		ret = PTR_ERR(dma->dma);
-		if (ret != -EPROBE_DEFER)
-			dev_err(dev, "no VDMA channel found\n");
+		ret = dev_err_probe(dev, PTR_ERR(dma->dma),
+			"no VDMA channel found\n");
 		goto error;
 	}
 
