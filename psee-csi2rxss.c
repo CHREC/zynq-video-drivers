@@ -518,27 +518,11 @@ static int xcsi2rxss_start_stream(struct xcsi2rxss_state *state)
 
 	state->streaming = true;
 
-	state->rsubdev =
-		xcsi2rxss_get_remote_subdev(&state->pads[XVIP_PAD_SINK]);
-
-	ret = v4l2_subdev_call(state->rsubdev, video, s_stream, 1);
-	if (ret) {
-		/* disable interrupts */
-		xcsi2rxss_clr(state, XCSI_IER_OFFSET, XCSI_IER_INTR_MASK);
-		xcsi2rxss_clr(state, XCSI_GIER_OFFSET, XCSI_GIER_GIE);
-
-		/* disable core */
-		xcsi2rxss_clr(state, XCSI_CCR_OFFSET, XCSI_CCR_ENABLE);
-		state->streaming = false;
-	}
-
 	return ret;
 }
 
 static void xcsi2rxss_stop_stream(struct xcsi2rxss_state *state)
 {
-	v4l2_subdev_call(state->rsubdev, video, s_stream, 0);
-
 	/* disable interrupts */
 	xcsi2rxss_clr(state, XCSI_IER_OFFSET, XCSI_IER_INTR_MASK);
 	xcsi2rxss_clr(state, XCSI_GIER_OFFSET, XCSI_GIER_GIE);
