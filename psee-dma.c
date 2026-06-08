@@ -39,7 +39,7 @@
 
 #define DEFAULT_PACKET_LENGTH		(1 << 20)
 
-#define DEFAULT_MARKER  0xE019E019E019E019
+#define DEFAULT_MARKER  0xE019E019//E019E019
 
 #define REG_CONTROL (0x0)
 union global_ctrl {
