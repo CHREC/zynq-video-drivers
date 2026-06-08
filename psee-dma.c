@@ -875,7 +875,7 @@ static int timeout_s_ctrl(struct v4l2_ctrl *ctrl)
 	case V4L2_CID_XFER_TIMEOUT_THRESHOLD:
 		timeout = ctrl->val;
 		timeout *= clk_get_rate(dma->clk);
-		timeout /= 1000000; /* val is in us */
+		timeout = div_u64(timeout, 1000000);///= 1000000; /* val is in us */
 		write_reg(dma, REG_TLAST_TIMEOUT, timeout);
 		return 0;
 	default:
