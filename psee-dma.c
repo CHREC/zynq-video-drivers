@@ -1031,7 +1031,7 @@ int psee_dma_init(struct psee_composite_device *psee_dev, struct psee_dma *dma,
 	v4l2_ctrl_handler_init(ctrl_hdr, 3);
 
 	/* Set a timeout symbol that works in both EVT21 and EVT3 */
-	write_reg64(dma, REG_TLAST_TIMEOUT_EVT_LSB, DEFAULT_MARKER);
+	write_reg(dma, REG_TLAST_TIMEOUT_EVT_LSB, DEFAULT_MARKER);
 
 	/* Register a control to enable/disable timeout on transfers */
 	v4l2_ctrl_new_custom(ctrl_hdr, &timeout_enable_control, dma);
