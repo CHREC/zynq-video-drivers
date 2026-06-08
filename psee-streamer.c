@@ -19,6 +19,9 @@
 #include <media/v4l2-async.h>
 #include <media/v4l2-subdev.h>
 
+#include "psee-format.h"
+
+
 #define PAD_SINK 0
 #define PAD_SOURCE 1
 

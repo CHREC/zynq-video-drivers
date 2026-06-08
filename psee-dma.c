@@ -87,15 +87,15 @@ static inline void write_reg(struct psee_dma *dma, u32 addr, u32 value)
 	iowrite32(value, dma->iomem + addr);
 }
 
-static inline u64 read_reg64(struct psee_dma *dma, u32 addr)
-{
-	return ioread64(dma->iomem + addr);
-}
+// static inline u64 read_reg64(struct psee_dma *dma, u32 addr)
+// {
+// 	return ioread64(dma->iomem + addr);
+// }
 
-static inline void write_reg64(struct psee_dma *dma, u32 addr, u64 value)
-{
-	iowrite64(value, dma->iomem + addr);
-}
+// static inline void write_reg64(struct psee_dma *dma, u32 addr, u64 value)
+// {
+// 	iowrite64(value, dma->iomem + addr);
+// }
 
 /* -----------------------------------------------------------------------------
  * Helper functions

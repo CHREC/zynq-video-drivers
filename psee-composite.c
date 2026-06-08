@@ -21,6 +21,8 @@
 
 #include "psee-dma.h"
 #include "psee-composite.h"
+#include "psee-format.h"
+
 
 /**
  * struct psee_graph_entity - Entity in the video graph
