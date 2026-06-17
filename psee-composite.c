@@ -566,6 +566,8 @@ static int psee_composite_v4l2_init(struct psee_composite_device *pdev)
 
 static int psee_composite_probe(struct platform_device *platform_dev)
 {
+		printk(KERN_WARNING "COMPOSITE PROBE 1\n");
+
 	struct psee_composite_device *pdev;
 	int ret;
 

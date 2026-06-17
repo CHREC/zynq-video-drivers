@@ -333,6 +333,8 @@ static int parse_of(struct psee_esst *esst)
 
 static int probe(struct platform_device *pdev)
 {
+		printk(KERN_WARNING "EVENT STREAM PROBE 1\n");
+
 	struct psee_esst *esst;
 	struct v4l2_subdev *subdev;
 	struct resource *io_space;

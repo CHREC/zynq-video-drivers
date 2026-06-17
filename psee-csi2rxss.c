@@ -1024,6 +1024,8 @@ err_ep_put:
 
 static int xcsi2rxss_probe(struct platform_device *pdev)
 {
+		printk(KERN_WARNING "XCSI2RXSS PROBE 1\n");
+
 	struct v4l2_subdev *subdev;
 	struct xcsi2rxss_state *xcsi2rxss;
 	int num_clks = ARRAY_SIZE(xcsi2rxss_clks);
