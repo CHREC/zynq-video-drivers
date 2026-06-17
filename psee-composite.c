@@ -574,6 +574,7 @@ static int psee_composite_probe(struct platform_device *platform_dev)
 	pdev = devm_kzalloc(&platform_dev->dev, sizeof(*pdev), GFP_KERNEL);
 	if (!pdev)
 		return -ENOMEM;
+printk(KERN_WARNING "COMPOSITE PROBE 2\n");
 
 	pdev->dev = &platform_dev->dev;
 	pdev->platform_dev = platform_dev;
@@ -582,14 +583,17 @@ static int psee_composite_probe(struct platform_device *platform_dev)
 	ret = psee_composite_v4l2_init(pdev);
 	if (ret < 0)
 		return ret;
+printk(KERN_WARNING "COMPOSITE PROBE 3\n");
 
 	ret = psee_graph_init(pdev);
 	if (ret < 0)
 		goto error;
+printk(KERN_WARNING "COMPOSITE PROBE 4\n");
 
 	platform_set_drvdata(platform_dev, pdev);
 
 	dev_info(pdev->dev, "device registered\n");
+printk(KERN_WARNING "COMPOSITE PROBE 5\n");
 
 	return 0;
 
