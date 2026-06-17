@@ -449,7 +449,7 @@ static int psee_graph_dma_init(struct psee_composite_device *pdev)
 	struct device_node *ports;
 	struct device_node *port;
 	int ret = 0;
-
+printk(KERN_WARNING "COMPOSITE DMA 1\n");
 	ports = of_get_child_by_name(pdev->dev->of_node, "ports");
 	if (ports == NULL) {
 		dev_err(pdev->dev, "ports node not present\n");
@@ -458,6 +458,7 @@ static int psee_graph_dma_init(struct psee_composite_device *pdev)
 
 	for_each_child_of_node(ports, port) {
 		ret = psee_graph_dma_init_one(pdev, port);
+		printk(KERN_WARNING "COMPOSITE DMA 2\n");
 		if (ret) {
 			of_node_put(port);
 			break;
@@ -465,6 +466,7 @@ static int psee_graph_dma_init(struct psee_composite_device *pdev)
 	}
 
 	of_node_put(ports);
+	printk(KERN_WARNING "COMPOSITE GRAPH 3\n");
 	return ret;
 }
 
