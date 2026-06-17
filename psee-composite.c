@@ -487,21 +487,25 @@ static int psee_graph_init(struct psee_composite_device *pdev)
 	int ret;
 
 	/* Init the DMA channels. */
+	printk(KERN_WARNING "COMPOSITE GRAPH 1\n");
+
 	ret = psee_graph_dma_init(pdev);
 	if (ret < 0) {
 		dev_err(pdev->dev, "DMA initialization failed\n");
 		goto done;
 	}
+printk(KERN_WARNING "COMPOSITE GRAPH 2\n");
 
 	v4l2_async_nf_init(&pdev->notifier, &pdev->v4l2_dev);
 
 	/* Parse the graph to extract a list of subdevice DT nodes. */
+	printk(KERN_WARNING "COMPOSITE GRAPH 3\n");
 	ret = psee_graph_parse(pdev);
 	if (ret < 0) {
 		dev_err(pdev->dev, "graph parsing failed\n");
 		goto done;
 	}
-
+printk(KERN_WARNING "COMPOSITE GRAPH 4\n");
 	if (list_empty(&pdev->notifier.waiting_list)) {
 		dev_err(pdev->dev, "no subdev found in graph\n");
 		ret = -ENOENT;
@@ -516,7 +520,7 @@ static int psee_graph_init(struct psee_composite_device *pdev)
 		dev_err(pdev->dev, "notifier registration failed\n");
 		goto done;
 	}
-
+printk(KERN_WARNING "COMPOSITE GRAPH 5\n");
 	ret = 0;
 
 done:
