@@ -417,8 +417,9 @@ static int psee_graph_dma_init_one(struct psee_composite_device *pdev,
 	unsigned int index;
 	int ret;
 
+	printk(KERN_WARNING "COMPOSITE GRAPH DMA 1\n");
 	of_property_read_u32(node, "reg", &index);
-
+printk(KERN_WARNING "COMPOSITE GRAPH DMA 2\t%d\n", index);
 	/* Originally there was a direction information on each port, to manage the DMA accordingly,
 	 * but now the binding states that there is exactly one port, acting as input.
 	 * Another may be added to inject data in the pipeline
@@ -428,19 +429,19 @@ static int psee_graph_dma_init_one(struct psee_composite_device *pdev,
 	dma = devm_kzalloc(pdev->dev, sizeof(*dma), GFP_KERNEL);
 	if (dma == NULL)
 		return -ENOMEM;
-
+printk(KERN_WARNING "COMPOSITE GRAPH DMA 3\n");
 	ret = psee_dma_init(pdev, dma, type, index,
 		platform_get_resource(pdev->platform_dev, IORESOURCE_MEM, index));
 	if (ret < 0) {
 		dev_err(pdev->dev, "%pOF initialization failed\n", node);
 		return ret;
 	}
-
+printk(KERN_WARNING "COMPOSITE GRAPH DMA 4\n");
 	list_add_tail(&dma->list, &pdev->dmas);
 
 	pdev->v4l2_caps |= type == V4L2_BUF_TYPE_VIDEO_CAPTURE
 			 ? V4L2_CAP_VIDEO_CAPTURE : V4L2_CAP_VIDEO_OUTPUT;
-
+printk(KERN_WARNING "COMPOSITE GRAPH DMA 5\n");
 	return 0;
 }
 
