@@ -353,19 +353,21 @@ static int probe(struct platform_device *pdev)
 	struct resource *io_space;
 	union global_ctrl ctrl = { .raw = 0 };
 	int ret;
-
+	printk(KERN_WARNING "ZYNQ 1\n");
 	tkhdlr = devm_kzalloc(&pdev->dev, sizeof(*tkhdlr), GFP_KERNEL);
 	if (!tkhdlr)
 		return -ENOMEM;
-
+printk(KERN_WARNING "ZYNQ 2\n");
 	tkhdlr->dev = &pdev->dev;
 
 	ret = parse_of(tkhdlr);
 	if (ret < 0)
 		return ret;
-
+printk(KERN_WARNING "ZYNQ 3\n");
 	io_space = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	printk(KERN_WARNING "ZYNQ 4\n");
 	tkhdlr->iomem = devm_ioremap_resource(tkhdlr->dev, io_space);
+	printk(KERN_WARNING "ZYNQ 5\n");
 	if (IS_ERR(tkhdlr->iomem))
 		return PTR_ERR(tkhdlr->iomem);
 	tkhdlr->iosize = resource_size(io_space);
@@ -373,7 +375,7 @@ static int probe(struct platform_device *pdev)
 	tkhdlr->clk = devm_clk_get(tkhdlr->dev, NULL);
 	if (IS_ERR(tkhdlr->clk))
 		return PTR_ERR(tkhdlr->clk);
-
+printk(KERN_WARNING "ZYNQ 6\n");
 	clk_prepare_enable(tkhdlr->clk);
 
 	/* Reset registers to a known configuration */
