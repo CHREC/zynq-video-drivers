@@ -1029,7 +1029,7 @@ printk(KERN_WARNING "PSEE DMA IOMEM %d\n", dma->iomem);
 	dummy_val = read_reg(dma, REG_CONTROL);
 	printk(KERN_WARNING "PSEE DMA INIT DUMMY VALUE %x\n", dummy_val);
 	control.reset = 1;
-	write_reg(dma, REG_CONTROL, control.raw);
+	// write_reg(dma, REG_CONTROL, control.raw);
 	printk(KERN_WARNING "PSEE DMA INIT 8 1 write reg control\n");
 	/* Set packet size to image size in bus words */
 	write_reg(dma, REG_PACKET_LENGTH, dma->transfer_size / 8);
