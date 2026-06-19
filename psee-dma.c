@@ -1019,6 +1019,9 @@ printk(KERN_WARNING "PSEE DMA INIT 7 DMA CHAN REQUESTED\n");
 	dma->iosize = resource_size(io_space);
 printk(KERN_WARNING "PSEE DMA INIT 8 DMA IO REMAPPED\n");
 	/* Reset the RTL */
+	u32 dummy_val;
+	dummy_val = read_reg(dma, REG_CONTROL);
+	printk(KERN_WARNING "PSEE DMA INIT DUMMY VALUE %x\n", dummy_val);
 	control.reset = 1;
 	write_reg(dma, REG_CONTROL, control.raw);
 	printk(KERN_WARNING "PSEE DMA INIT 8 1 write reg control\n");
