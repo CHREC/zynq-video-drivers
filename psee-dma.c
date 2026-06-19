@@ -84,7 +84,9 @@ static inline u32 read_reg(struct psee_dma *dma, u32 addr)
 
 static inline void write_reg(struct psee_dma *dma, u32 addr, u32 value)
 {
+	printk(KERN_WARNING "PSEE WRITE REG %x %x\n", addr, value);
 	iowrite32(value, dma->iomem + addr);
+	printk(KERN_WARNING "PSEE WROTE REG\n");
 }
 
 // static inline u64 read_reg64(struct psee_dma *dma, u32 addr)
