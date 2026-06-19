@@ -1019,9 +1019,10 @@ printk(KERN_WARNING "PSEE DMA INIT 8 DMA IO REMAPPED\n");
 	/* Reset the RTL */
 	control.reset = 1;
 	write_reg(dma, REG_CONTROL, control.raw);
+	printk(KERN_WARNING "PSEE DMA INIT 8 1 write reg control\n");
 	/* Set packet size to image size in bus words */
 	write_reg(dma, REG_PACKET_LENGTH, dma->transfer_size / 8);
-
+	printk(KERN_WARNING "PSEE DMA INIT 8 2 write packet length\n");
 	/* Initialize the V4L2-ctl handler to tune the behavior */
 	dma->video.ctrl_handler =
 		devm_kzalloc(dev, sizeof(*dma->video.ctrl_handler), GFP_KERNEL);
