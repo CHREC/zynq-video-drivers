@@ -924,8 +924,10 @@ int psee_dma_init(struct psee_composite_device *psee_dev, struct psee_dma *dma,
 
 	dma->psee_dev = psee_dev;
 	dma->port = port;
+	printk(KERN_WARNING "PSEE DMA INIT 1\n");
 	mutex_init(&dma->lock);
 	mutex_init(&dma->pipe.lock);
+	printk(KERN_WARNING "PSEE DMA INIT 2 LOCKED\n");
 	INIT_LIST_HEAD(&dma->queued_bufs);
 	spin_lock_init(&dma->queued_lock);
 
@@ -935,6 +937,7 @@ int psee_dma_init(struct psee_composite_device *psee_dev, struct psee_dma *dma,
 		ret = PTR_ERR(dma->clk);
 		goto error;
 	}
+	printk(KERN_WARNING "PSEE DMA INIT 3 GOT CLOCK\n");
 	clk_prepare_enable(dma->clk);
 	dev_dbg(dev, "Got clk at %lu", clk_get_rate(dma->clk));
 
@@ -948,7 +951,7 @@ int psee_dma_init(struct psee_composite_device *psee_dev, struct psee_dma *dma,
 	ret = media_entity_pads_init(&dma->video.entity, 1, &dma->pad);
 	if (ret < 0)
 		goto error;
-
+printk(KERN_WARNING "PSEE DMA INIT 4 INIT MEDIA ENTITY PADS\n");
 	/* ... and the video node... */
 	dma->video.fops = &fops;
 	dma->video.v4l2_dev = &psee_dev->v4l2_dev;
@@ -970,7 +973,7 @@ int psee_dma_init(struct psee_composite_device *psee_dev, struct psee_dma *dma,
 		dma->video.device_caps |= V4L2_CAP_VIDEO_OUTPUT;
 
 	video_set_drvdata(&dma->video, dma);
-
+printk(KERN_WARNING "PSEE DMA INIT 5 SET DRIVER DATA\n");
 	/* ... and the buffers queue... */
 	/* Don't enable VB2_READ and VB2_WRITE, as using the read() and write()
 	 * V4L2 APIs would be inefficient. Testing on the command line with a
@@ -994,7 +997,7 @@ int psee_dma_init(struct psee_composite_device *psee_dev, struct psee_dma *dma,
 		dev_err(dma->psee_dev->dev, "failed to initialize VB2 queue\n");
 		goto error;
 	}
-
+printk(KERN_WARNING "PSEE DMA INIT 6 QUEUE INIT\n");
 	/* ... and the DMA channel. */
 	snprintf(name, sizeof(name), "port%u", port);
 	dma->dma = dma_request_chan(dev, name);
@@ -1003,7 +1006,7 @@ int psee_dma_init(struct psee_composite_device *psee_dev, struct psee_dma *dma,
 			"no VDMA channel found\n");
 		goto error;
 	}
-
+printk(KERN_WARNING "PSEE DMA INIT 7 DMA CHAN REQUESTED\n");
 	/* Map the DMA packetizer registers */
 	dma->iomem = devm_ioremap_resource(dev, io_space);
 	if (IS_ERR(dma->iomem)) {
@@ -1012,7 +1015,7 @@ int psee_dma_init(struct psee_composite_device *psee_dev, struct psee_dma *dma,
 		goto error;
 	}
 	dma->iosize = resource_size(io_space);
-
+printk(KERN_WARNING "PSEE DMA INIT 8 DMA IO REMAPPED\n");
 	/* Reset the RTL */
 	control.reset = 1;
 	write_reg(dma, REG_CONTROL, control.raw);
@@ -1028,6 +1031,7 @@ int psee_dma_init(struct psee_composite_device *psee_dev, struct psee_dma *dma,
 		ret = -ENOMEM;
 		goto error;
 	}
+	printk(KERN_WARNING "PSEE DMA INIT 9 V4L2 ALLOC\n");
 	v4l2_ctrl_handler_init(ctrl_hdr, 3);
 
 	/* Set a timeout symbol that works in both EVT21 and EVT3 */
@@ -1035,9 +1039,10 @@ int psee_dma_init(struct psee_composite_device *psee_dev, struct psee_dma *dma,
 
 	/* Register a control to enable/disable timeout on transfers */
 	v4l2_ctrl_new_custom(ctrl_hdr, &timeout_enable_control, dma);
+	printk(KERN_WARNING "PSEE DMA INIT 10 V4L2 CONTROL ENABLE\n");
 	/* And one to set the timeout duration */
 	v4l2_ctrl_new_custom(ctrl_hdr, &timeout_threshold_control, dma);
-
+printk(KERN_WARNING "PSEE DMA INIT 11 V4L2 TIMEOUT ENABLE\n");
 	ret = ctrl_hdr->error;
 	if (ret < 0) {
 		dev_err(dev, "failed to set control handler\n");
@@ -1049,7 +1054,7 @@ int psee_dma_init(struct psee_composite_device *psee_dev, struct psee_dma *dma,
 		dev_err(dev, "failed to register video device\n");
 		goto error;
 	}
-
+printk(KERN_WARNING "PSEE DMA INIT 12 VIDEO DEVICE REGISTERED\n");
 	return 0;
 
 error:
