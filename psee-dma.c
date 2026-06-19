@@ -770,7 +770,7 @@ static int log_status(struct file *file, void *fh)
 		config.enable_tlast_timeout ? "TIMEOUT " : "",
 		config.raw);
 
-	dev_info(dev, "I/O space = 0x%llx\n", dma->iosize);
+	dev_info(dev, "I/O space = 0x%x\n", dma->iosize);
 	return 0;
 }
 

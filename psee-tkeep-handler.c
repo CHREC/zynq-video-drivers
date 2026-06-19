@@ -238,7 +238,7 @@ static int log_status(struct v4l2_subdev *sd)
 		config.word_order_swap ? "WORD_SWAPPING" : "",
 		config.raw);
 
-	dev_info(dev, "I/O space = 0x%llx\n", tkhdlr->iosize);
+	dev_info(dev, "I/O space = 0x%x\n", tkhdlr->iosize);
 	return 0;
 }
 

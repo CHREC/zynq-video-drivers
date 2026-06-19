@@ -231,7 +231,7 @@ static int log_status(struct v4l2_subdev *sd)
 		config.bypass ? "BYPASSED" : "USED",
 		config.raw);
 
-	dev_info(dev, "I/O space = 0x%llx\n", streamer->iosize);
+	dev_info(dev, "I/O space = 0x%x\n", streamer->iosize);
 	return 0;
 }
 
