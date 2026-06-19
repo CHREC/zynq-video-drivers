@@ -1010,6 +1010,10 @@ printk(KERN_WARNING "PSEE DMA INIT 6 QUEUE INIT\n");
 	}
 printk(KERN_WARNING "PSEE DMA INIT 7 DMA CHAN REQUESTED\n");
 	/* Map the DMA packetizer registers */
+	printk(KERN_WARNING
+         "Mapping packetizer at phys=%pa size=0x%x\n",
+         &io_space->start,
+         resource_size(io_space));
 	dma->iomem = devm_ioremap_resource(dev, io_space);
 	if (IS_ERR(dma->iomem)) {
 		dev_err(dev, "Missing DMA packetizer iomem\n");
@@ -1019,6 +1023,7 @@ printk(KERN_WARNING "PSEE DMA INIT 7 DMA CHAN REQUESTED\n");
 	dma->iosize = resource_size(io_space);
 printk(KERN_WARNING "PSEE DMA INIT 8 DMA IO REMAPPED\n");
 printk(KERN_WARNING "PSEE DMA INIT IO SIZE %d\n", dma->iosize);
+printk(KERN_WARNING "PSEE DMA IOMEM %d\n", dma->iomem);
 	/* Reset the RTL */
 	u32 dummy_val;
 	dummy_val = read_reg(dma, REG_CONTROL);
