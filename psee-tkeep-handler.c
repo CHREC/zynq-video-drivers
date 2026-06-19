@@ -381,15 +381,17 @@ printk(KERN_WARNING "ZYNQ 6\n");
 	/* Reset registers to a known configuration */
 	ctrl.reset = 1;
 	write_reg(tkhdlr, REG_CONTROL, ctrl.raw);
-
+printk(KERN_WARNING "ZYNQ 7\n");
 	/* Initialize V4L2 subdevice and media entity */
 	subdev = &tkhdlr->subdev;
 	v4l2_subdev_init(subdev, &ops);
+	printk(KERN_WARNING "ZYNQ 8\n");
 	/* It may not be the right function, but at least it's pixel in/pixel out */
 	subdev->entity.function = MEDIA_ENT_F_PROC_VIDEO_PIXEL_ENC_CONV;
 	subdev->dev = &pdev->dev;
 	strscpy(subdev->name, dev_name(&pdev->dev), sizeof(subdev->name));
 	v4l2_set_subdevdata(subdev, tkhdlr);
+	printk(KERN_WARNING "ZYNQ 9\n");
 	subdev->flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;
 
 	tkhdlr->pads[PAD_SINK].flags = MEDIA_PAD_FL_SINK;
@@ -398,15 +400,15 @@ printk(KERN_WARNING "ZYNQ 6\n");
 	ret = media_entity_pads_init(&subdev->entity, 2, tkhdlr->pads);
 	if (ret < 0)
 		goto error;
-
+printk(KERN_WARNING "ZYNQ 10\n");
 	platform_set_drvdata(pdev, tkhdlr);
-
+printk(KERN_WARNING "ZYNQ 11\n");
 	ret = v4l2_async_register_subdev(subdev);
 	if (ret < 0) {
 		dev_err(&pdev->dev, "failed to register subdev\n");
 		goto error;
 	}
-
+printk(KERN_WARNING "ZYNQ 12\n");
 	return 0;
 
 error:
