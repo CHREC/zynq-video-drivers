@@ -380,7 +380,7 @@ printk(KERN_WARNING "ZYNQ 6\n");
 
 	/* Reset registers to a known configuration */
 	ctrl.reset = 1;
-	write_reg(tkhdlr, REG_CONTROL, ctrl.raw);
+	// write_reg(tkhdlr, REG_CONTROL, ctrl.raw);
 printk(KERN_WARNING "ZYNQ 7\n");
 	/* Initialize V4L2 subdevice and media entity */
 	subdev = &tkhdlr->subdev;
