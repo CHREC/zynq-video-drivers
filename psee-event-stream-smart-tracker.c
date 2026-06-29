@@ -125,7 +125,7 @@ __get_pad_format(struct psee_esst *esst, struct v4l2_subdev_state *sd_state,
 		format = NULL;
 		break;
 	}
-
+	dev_warn("PSEE FORMAT: %d\n", format->code);
 	return format;
 }
 

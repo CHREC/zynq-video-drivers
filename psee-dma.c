@@ -106,7 +106,7 @@ static inline void write_reg(struct psee_dma *dma, u32 addr, u32 value)
 static u32 mediabus_to_pixel(unsigned int code)
 {
 	u32 pix;
-
+	printk(KERN_WARNING "PSEE FORMAT %d\n", code);
 	switch (code) {
 	case MEDIA_BUS_FMT_PSEE_EVT2:
 		pix = V4L2_PIX_FMT_PSEE_EVT2;
@@ -759,18 +759,18 @@ static int log_status(struct file *file, void *fh)
 	config.raw = read_reg(dma, REG_CONFIG);
 	version = read_reg(dma, REG_VERSION);
 
-	dev_info(dev, "***** PseeVideo driver *****\n");
-	dev_info(dev, "Version = 0x%x\n", version);
-	dev_info(dev, "Control = %s %s(0x%x)\n",
+	dev_warn(dev, "***** PseeVideo driver *****\n");
+	dev_warn(dev, "Version = 0x%x\n", version);
+	dev_warn(dev, "Control = %s %s(0x%x)\n",
 		control.enable ? "ENABLED" : "DISABLED",
 		control.clear ? "CLEARING " : "",
 		control.raw);
-	dev_info(dev, "Config = %s%s(0x%x)\n",
+	dev_warn(dev, "Config = %s%s(0x%x)\n",
 		config.enable_pattern ? "PATTERN " : "",
 		config.enable_tlast_timeout ? "TIMEOUT " : "",
 		config.raw);
 
-	dev_info(dev, "I/O space = 0x%x\n", dma->iosize);
+	dev_warn(dev, "I/O space = 0x%x\n", dma->iosize);
 	return 0;
 }
 
