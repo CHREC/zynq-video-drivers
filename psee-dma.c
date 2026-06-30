@@ -676,8 +676,10 @@ __get_format(struct psee_dma *dma, struct v4l2_pix_format *pix)
 		dev_warn(dma->psee_dev->dev,
 			"Could not translate format code 0x%x to pixel code\n",
 			fmt.format.code);
-	v4l2_fill_pix_format(pix, &fmt.format);
 
+	printk("PSEE DMA V4L2 FILLING FORMAT: %d\n", fmt.format);
+	v4l2_fill_pix_format(pix, &fmt.format);
+	printk("PSEE DMA V4L2 FILLED FORMAT: %d\n", fmt.format);
 	/* The packetizer uses arbitrary transfer size */
 	pix->sizeimage = dma->transfer_size;
 	/* and there is no per line padding, there isn't even lines */
