@@ -356,9 +356,9 @@ static void xcsi2rxss_hard_reset(struct xcsi2rxss_state *state)
 		return;
 
 	/* minimum of 40 dphy_clk_200M cycles */
-	gpiod_set_value_cansleep(state->rst_gpio, 1);
-	usleep_range(1, 2);
-	gpiod_set_value_cansleep(state->rst_gpio, 0);
+	// gpiod_set_value_cansleep(state->rst_gpio, 1);
+	// usleep_range(1, 2);
+	// gpiod_set_value_cansleep(state->rst_gpio, 0);
 }
 
 static void xcsi2rxss_reset_event_counters(struct xcsi2rxss_state *state)
@@ -498,7 +498,7 @@ static struct v4l2_subdev *xcsi2rxss_get_remote_subdev(struct media_pad *local)
 static int xcsi2rxss_start_stream(struct xcsi2rxss_state *state)
 {
 	int ret = 0;
-
+	printk(KERN_WARNING "CSI RX STREAM STARTING");
 	/* enable core */
 	xcsi2rxss_set(state, XCSI_CCR_OFFSET, XCSI_CCR_ENABLE);
 
@@ -517,7 +517,7 @@ static int xcsi2rxss_start_stream(struct xcsi2rxss_state *state)
 	xcsi2rxss_set(state, XCSI_GIER_OFFSET, XCSI_GIER_GIE);
 
 	state->streaming = true;
-
+	printk(KERN_WARNING "CSI RX STREAM STARTING RETURN");
 	return ret;
 }
 
@@ -547,7 +547,7 @@ static irqreturn_t xcsi2rxss_irq_handler(int irq, void *data)
 	struct xcsi2rxss_state *state = (struct xcsi2rxss_state *)data;
 	struct device *dev = state->dev;
 	u32 status;
-
+printk(KERN_WARNING "CSI RX STREAM IRQ HANDLING");
 	status = xcsi2rxss_read(state, XCSI_ISR_OFFSET) & XCSI_ISR_ALLINTR_MASK;
 	xcsi2rxss_write(state, XCSI_ISR_OFFSET, status);
 
