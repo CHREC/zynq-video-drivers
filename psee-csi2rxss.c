@@ -268,13 +268,16 @@ to_xcsi2rxssstate(struct v4l2_subdev *subdev)
  */
 static inline u32 xcsi2rxss_read(struct xcsi2rxss_state *xcsi2rxss, u32 addr)
 {
+	printk(KERN_WARNING "CSI2RX reading REG:0x%08X\n", addr);
 	return ioread32(xcsi2rxss->iomem + addr);
 }
 
 static inline void xcsi2rxss_write(struct xcsi2rxss_state *xcsi2rxss, u32 addr,
 				   u32 value)
 {
+	printk(KERN_WARNING "CSI2RX writing REG:0x%08X VAL:0x%08X\n", addr, value);
 	iowrite32(value, xcsi2rxss->iomem + addr);
+	printk(KERN_WARNING "CSI2RX wrote REG:0x%08X VAL:0x%08X\n", addr, value);
 }
 
 static inline void xcsi2rxss_clr(struct xcsi2rxss_state *xcsi2rxss, u32 addr,
@@ -356,9 +359,9 @@ static void xcsi2rxss_hard_reset(struct xcsi2rxss_state *state)
 		return;
 
 	/* minimum of 40 dphy_clk_200M cycles */
-	// gpiod_set_value_cansleep(state->rst_gpio, 1);
-	// usleep_range(1, 2);
-	// gpiod_set_value_cansleep(state->rst_gpio, 0);
+	gpiod_set_value_cansleep(state->rst_gpio, 1);
+	usleep_range(1, 2);
+	gpiod_set_value_cansleep(state->rst_gpio, 0);
 }
 
 static void xcsi2rxss_reset_event_counters(struct xcsi2rxss_state *state)

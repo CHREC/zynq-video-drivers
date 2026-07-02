@@ -79,6 +79,7 @@ union global_cfg {
  */
 static inline u32 read_reg(struct psee_dma *dma, u32 addr)
 {
+	printk(KERN_WARNING "PSEE VIDEO read REG:0x%08X\n", addr);
 	return ioread32(dma->iomem + addr);
 }
 
