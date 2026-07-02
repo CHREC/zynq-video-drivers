@@ -121,7 +121,7 @@ static u32 mediabus_to_pixel(unsigned int code)
 		pix = V4L2_PIX_FMT_PSEE_EVT3;
 		break;
 	default:
-		pix = V4L2_PIX_FMT_PSEE_EVT3;
+		pix = 0;
 		break;
 	}
 	return pix;
