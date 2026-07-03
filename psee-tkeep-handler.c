@@ -353,21 +353,16 @@ static int probe(struct platform_device *pdev)
 	struct resource *io_space;
 	union global_ctrl ctrl = { .raw = 0 };
 	int ret;
-	printk(KERN_WARNING "ZYNQ 1\n");
 	tkhdlr = devm_kzalloc(&pdev->dev, sizeof(*tkhdlr), GFP_KERNEL);
 	if (!tkhdlr)
 		return -ENOMEM;
-printk(KERN_WARNING "ZYNQ 2\n");
 	tkhdlr->dev = &pdev->dev;
 
 	ret = parse_of(tkhdlr);
 	if (ret < 0)
 		return ret;
-printk(KERN_WARNING "ZYNQ 3\n");
 	io_space = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	printk(KERN_WARNING "ZYNQ 4\n");
 	tkhdlr->iomem = devm_ioremap_resource(tkhdlr->dev, io_space);
-	printk(KERN_WARNING "ZYNQ 5\n");
 	if (IS_ERR(tkhdlr->iomem))
 		return PTR_ERR(tkhdlr->iomem);
 	tkhdlr->iosize = resource_size(io_space);
@@ -375,23 +370,19 @@ printk(KERN_WARNING "ZYNQ 3\n");
 	tkhdlr->clk = devm_clk_get(tkhdlr->dev, NULL);
 	if (IS_ERR(tkhdlr->clk))
 		return PTR_ERR(tkhdlr->clk);
-printk(KERN_WARNING "ZYNQ 6\n");
 	clk_prepare_enable(tkhdlr->clk);
 
 	/* Reset registers to a known configuration */
 	ctrl.reset = 1;
 	// write_reg(tkhdlr, REG_CONTROL, ctrl.raw);
-printk(KERN_WARNING "ZYNQ 7\n");
 	/* Initialize V4L2 subdevice and media entity */
 	subdev = &tkhdlr->subdev;
 	v4l2_subdev_init(subdev, &ops);
-	printk(KERN_WARNING "ZYNQ 8\n");
 	/* It may not be the right function, but at least it's pixel in/pixel out */
 	subdev->entity.function = MEDIA_ENT_F_PROC_VIDEO_PIXEL_ENC_CONV;
 	subdev->dev = &pdev->dev;
 	strscpy(subdev->name, dev_name(&pdev->dev), sizeof(subdev->name));
 	v4l2_set_subdevdata(subdev, tkhdlr);
-	printk(KERN_WARNING "ZYNQ 9\n");
 	subdev->flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;
 
 	tkhdlr->pads[PAD_SINK].flags = MEDIA_PAD_FL_SINK;
@@ -400,15 +391,12 @@ printk(KERN_WARNING "ZYNQ 7\n");
 	ret = media_entity_pads_init(&subdev->entity, 2, tkhdlr->pads);
 	if (ret < 0)
 		goto error;
-printk(KERN_WARNING "ZYNQ 10\n");
 	platform_set_drvdata(pdev, tkhdlr);
-printk(KERN_WARNING "ZYNQ 11\n");
 	ret = v4l2_async_register_subdev(subdev);
 	if (ret < 0) {
 		dev_err(&pdev->dev, "failed to register subdev\n");
 		goto error;
 	}
-printk(KERN_WARNING "ZYNQ 12\n");
 	return 0;
 
 error:

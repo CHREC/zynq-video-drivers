@@ -22,7 +22,7 @@
 #include "psee-dma.h"
 #include "psee-composite.h"
 #include "psee-format.h"
-
+#include <linux/delay.h>
 /* From <media/media-entity.h> on newer kernels (6.11) */
 /**
  * media_entity_for_each_pad - Iterate on all pads in an entity
@@ -107,7 +107,6 @@ static inline void write_reg(struct psee_dma *dma, u32 addr, u32 value)
 static u32 mediabus_to_pixel(unsigned int code)
 {
 	u32 pix;
-	printk(KERN_WARNING "PSEE FORMAT %d\n", code);
 	switch (code) {
 	case MEDIA_BUS_FMT_PSEE_EVT2:
 		pix = V4L2_PIX_FMT_PSEE_EVT2;
@@ -184,7 +183,7 @@ static int start_stop_recursive(struct media_entity *entity, bool start)
 	int ret;
 
 	dev_dbg(dev, "%s on %s", start ? "start" : "stop", entity->name);
-	printk(KERN_WARNING "PSEE VIDEO %sing device %s\n", start ? "start" : "stop", entity->name);
+	printk(KERN_WARNING "PSEE VIDEO %sing device %s\n", start ? "start" : "stopp", entity->name);
 	/* When starting, start the receiver before the producer */
 	if (start) {
 		ret = v4l2_subdev_call(subdev, video, s_stream, start);
@@ -952,10 +951,8 @@ int psee_dma_init(struct psee_composite_device *psee_dev, struct psee_dma *dma,
 
 	dma->psee_dev = psee_dev;
 	dma->port = port;
-	printk(KERN_WARNING "PSEE DMA INIT 1\n");
 	mutex_init(&dma->lock);
 	mutex_init(&dma->pipe.lock);
-	printk(KERN_WARNING "PSEE DMA INIT 2 LOCKED\n");
 	INIT_LIST_HEAD(&dma->queued_bufs);
 	spin_lock_init(&dma->queued_lock);
 
@@ -965,7 +962,6 @@ int psee_dma_init(struct psee_composite_device *psee_dev, struct psee_dma *dma,
 		ret = PTR_ERR(dma->clk);
 		goto error;
 	}
-	printk(KERN_WARNING "PSEE DMA INIT 3 GOT CLOCK\n");
 	clk_prepare_enable(dma->clk);
 	dev_dbg(dev, "Got clk at %lu", clk_get_rate(dma->clk));
 
@@ -979,7 +975,6 @@ int psee_dma_init(struct psee_composite_device *psee_dev, struct psee_dma *dma,
 	ret = media_entity_pads_init(&dma->video.entity, 1, &dma->pad);
 	if (ret < 0)
 		goto error;
-printk(KERN_WARNING "PSEE DMA INIT 4 INIT MEDIA ENTITY PADS\n");
 	/* ... and the video node... */
 	dma->video.fops = &fops;
 	dma->video.v4l2_dev = &psee_dev->v4l2_dev;
@@ -1001,7 +996,6 @@ printk(KERN_WARNING "PSEE DMA INIT 4 INIT MEDIA ENTITY PADS\n");
 		dma->video.device_caps |= V4L2_CAP_VIDEO_OUTPUT;
 
 	video_set_drvdata(&dma->video, dma);
-printk(KERN_WARNING "PSEE DMA INIT 5 SET DRIVER DATA\n");
 	/* ... and the buffers queue... */
 	/* Don't enable VB2_READ and VB2_WRITE, as using the read() and write()
 	 * V4L2 APIs would be inefficient. Testing on the command line with a
@@ -1025,7 +1019,6 @@ printk(KERN_WARNING "PSEE DMA INIT 5 SET DRIVER DATA\n");
 		dev_err(dma->psee_dev->dev, "failed to initialize VB2 queue\n");
 		goto error;
 	}
-printk(KERN_WARNING "PSEE DMA INIT 6 QUEUE INIT\n");
 	/* ... and the DMA channel. */
 	snprintf(name, sizeof(name), "port%u", port);
 	dma->dma = dma_request_chan(dev, name);
@@ -1034,9 +1027,7 @@ printk(KERN_WARNING "PSEE DMA INIT 6 QUEUE INIT\n");
 			"no VDMA channel found\n");
 		goto error;
 	}
-printk(KERN_WARNING "PSEE DMA INIT 7 DMA CHAN REQUESTED\n");
 	/* Map the DMA packetizer registers */
-	printk(KERN_WARNING "Mapping packetizer at phys=%pa size=0x%x\n", &io_space->start, resource_size(io_space));
 	dma->iomem = devm_ioremap_resource(dev, io_space);
 	if (IS_ERR(dma->iomem)) {
 		dev_err(dev, "Missing DMA packetizer iomem\n");
@@ -1044,19 +1035,13 @@ printk(KERN_WARNING "PSEE DMA INIT 7 DMA CHAN REQUESTED\n");
 		goto error;
 	}
 	dma->iosize = resource_size(io_space);
-printk(KERN_WARNING "PSEE DMA INIT 8 DMA IO REMAPPED\n");
-printk(KERN_WARNING "PSEE DMA INIT IO SIZE %d\n", dma->iosize);
-printk(KERN_WARNING "PSEE DMA IOMEM %d\n", dma->iomem);
+
 	/* Reset the RTL */
-	u32 dummy_val;
-	dummy_val = read_reg(dma, REG_CONTROL);
-	printk(KERN_WARNING "PSEE DMA INIT DUMMY VALUE %x\n", dummy_val);
+
 	control.reset = 1;
 	// write_reg(dma, REG_CONTROL, control.raw);
-	printk(KERN_WARNING "PSEE DMA INIT 8 1 write reg control\n");
 	/* Set packet size to image size in bus words */
 	write_reg(dma, REG_PACKET_LENGTH, dma->transfer_size / 8);
-	printk(KERN_WARNING "PSEE DMA INIT 8 2 write packet length\n");
 	/* Initialize the V4L2-ctl handler to tune the behavior */
 	dma->video.ctrl_handler =
 		devm_kzalloc(dev, sizeof(*dma->video.ctrl_handler), GFP_KERNEL);
@@ -1066,7 +1051,6 @@ printk(KERN_WARNING "PSEE DMA IOMEM %d\n", dma->iomem);
 		ret = -ENOMEM;
 		goto error;
 	}
-	printk(KERN_WARNING "PSEE DMA INIT 9 V4L2 ALLOC\n");
 	v4l2_ctrl_handler_init(ctrl_hdr, 3);
 
 	/* Set a timeout symbol that works in both EVT21 and EVT3 */
@@ -1074,10 +1058,8 @@ printk(KERN_WARNING "PSEE DMA IOMEM %d\n", dma->iomem);
 
 	/* Register a control to enable/disable timeout on transfers */
 	v4l2_ctrl_new_custom(ctrl_hdr, &timeout_enable_control, dma);
-	printk(KERN_WARNING "PSEE DMA INIT 10 V4L2 CONTROL ENABLE\n");
 	/* And one to set the timeout duration */
 	v4l2_ctrl_new_custom(ctrl_hdr, &timeout_threshold_control, dma);
-printk(KERN_WARNING "PSEE DMA INIT 11 V4L2 TIMEOUT ENABLE\n");
 	ret = ctrl_hdr->error;
 	if (ret < 0) {
 		dev_err(dev, "failed to set control handler\n");
@@ -1089,7 +1071,6 @@ printk(KERN_WARNING "PSEE DMA INIT 11 V4L2 TIMEOUT ENABLE\n");
 		dev_err(dev, "failed to register video device\n");
 		goto error;
 	}
-printk(KERN_WARNING "PSEE DMA INIT 12 VIDEO DEVICE REGISTERED\n");
 	return 0;
 
 error:
