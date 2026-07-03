@@ -113,22 +113,17 @@ __get_pad_format(struct psee_esst *esst, struct v4l2_subdev_state *sd_state,
 	unsigned int pad, u32 which)
 {
 	struct v4l2_mbus_framefmt *format;
-	printk(KERN_WARNING "PSEE SMARTTRACKER WHICH: %d\n", which);
 	switch (which) {
 	case V4L2_SUBDEV_FORMAT_TRY:
-		printk(KERN_WARNING "PSEE SMARTTRACKER WHICH FORMAT TRY\n");
 		format = v4l2_subdev_get_try_format(&esst->subdev, sd_state, pad);
 		break;
 	case V4L2_SUBDEV_FORMAT_ACTIVE:
-		printk(KERN_WARNING "PSEE SMARTTRACKER WHICH FORMAT ACTIVE\n");
 		format = &esst->formats[pad];
 		break;
 	default:
-		printk(KERN_WARNING "PSEE SMARTTRACKER WHICH FORMAT FUCK\n");
 		format = NULL;
 		break;
 	}
-	printk(KERN_WARNING "PSEE SMARTTRACKER FORMAT: %d\n", format->code);
 	return format;
 }
 
@@ -150,7 +145,6 @@ static int enum_mbus_code(struct v4l2_subdev *subdev, struct v4l2_subdev_state *
 static int get_format(struct v4l2_subdev *subdev, struct v4l2_subdev_state *sd_state,
 	struct v4l2_subdev_format *fmt)
 {
-	printk(KERN_WARNING "PSEE SMARTTRACKER GET FORMAT\n");
 	struct psee_esst *esst = to_esst(subdev);
 	struct v4l2_mbus_framefmt *format;
 
@@ -166,7 +160,6 @@ static int get_format(struct v4l2_subdev *subdev, struct v4l2_subdev_state *sd_s
 static int set_format(struct v4l2_subdev *subdev, struct v4l2_subdev_state *sd_state,
 	struct v4l2_subdev_format *fmt)
 {
-	printk(KERN_WARNING "PSEE SMARTTRACKER SET FORMAT\n");
 	struct psee_esst *esst = to_esst(subdev);
 	struct v4l2_mbus_framefmt *format;
 	union global_cfg config;
@@ -338,7 +331,6 @@ static int parse_of(struct psee_esst *esst)
 
 static int probe(struct platform_device *pdev)
 {
-		printk(KERN_WARNING "EVENT STREAM PROBE 1\n");
 
 	struct psee_esst *esst;
 	struct v4l2_subdev *subdev;

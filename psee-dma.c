@@ -311,7 +311,6 @@ static int psee_pipeline_set_stream(struct psee_pipeline *pipe, bool on)
 	int ret = 0;
 
 	mutex_lock(&pipe->lock);
-	printk(KERN_WARNING "PSEE VIDEO setting stream %s\n", on ? "on": "off");
 	if (on) {
 		if (pipe->stream_count == pipe->num_dmas - 1) {
 			printk(KERN_WARNING "PSEE VIDEO starting the pipeline\n");
@@ -548,9 +547,7 @@ static int start_streaming(struct vb2_queue *vq, unsigned int count)
 	 * Use the pipeline object embedded in the first DMA object that starts
 	 * streaming.
 	 */
-	printk(KERN_WARNING "PSEE VIDEO start streaming to psee pipeline\n");
 	pipe = to_psee_pipeline(&dma->video) ? : &dma->pipe;
-printk(KERN_WARNING "PSEE VIDEO start streaming start device\n");
 	ret = video_device_pipeline_start(&dma->video, &pipe->pipe);
 	if (ret < 0)
 		goto error;
@@ -558,11 +555,9 @@ printk(KERN_WARNING "PSEE VIDEO start streaming start device\n");
 	/* Verify that the configured format matches the output of the
 	 * connected subdev.
 	 */
-	printk(KERN_WARNING "PSEE VIDEO start streaming verify format\n");
 	ret = verify_format(dma);
 	if (ret < 0)
 		goto error_stop;
-printk(KERN_WARNING "PSEE VIDEO start streaming prep pipeline\n");
 	ret = psee_pipeline_prepare(pipe, dma);
 	if (ret < 0)
 		goto error_stop;
@@ -570,22 +565,17 @@ printk(KERN_WARNING "PSEE VIDEO start streaming prep pipeline\n");
 	/* Start the DMA engine. This must be done before starting the blocks
 	 * in the pipeline to avoid DMA synchronization issues.
 	 */
-	printk(KERN_WARNING "PSEE VIDEO start streaming starting dma\n");
 	dma_async_issue_pending(dma->dma);
 
 	/* Set the packetizer requested behavior */
-	printk(KERN_WARNING "PSEE VIDEO start streaming setup packetizer\n");
 	v4l2_ctrl_handler_setup(dma->video.ctrl_handler);
 
 	/* Start the pipeline. */
-	printk(KERN_WARNING "PSEE VIDEO start streaming for realsies\n");
 	psee_pipeline_set_stream(pipe, true);
 
 	/* Enable the packetizer */
-	printk(KERN_WARNING "PSEE VIDEO start streaming enable packetizer\n");
 	control = (union global_ctrl){ .enable = 1 };
 	write_reg(dma, REG_CONTROL, control.raw);
-	printk(KERN_WARNING "PSEE VIDEO start streaming wrote reg\n");
 	return 0;
 
 error_stop:
@@ -702,9 +692,7 @@ __get_format(struct psee_dma *dma, struct v4l2_pix_format *pix)
 			"Could not translate format code 0x%x to pixel code\n",
 			fmt.format.code);
 
-	printk("PSEE DMA V4L2 FILLING FORMAT: %d\n", fmt.format);
 	v4l2_fill_pix_format(pix, &fmt.format);
-	printk("PSEE DMA V4L2 FILLED FORMAT: %d\n", fmt.format);
 	/* The packetizer uses arbitrary transfer size */
 	pix->sizeimage = dma->transfer_size;
 	/* and there is no per line padding, there isn't even lines */
