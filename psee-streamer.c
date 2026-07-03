@@ -341,7 +341,6 @@ static int parse_of(struct psee_streamer *streamer)
 
 static int probe(struct platform_device *pdev)
 {
-		printk(KERN_WARNING "STREAMER PROBE 1\n");
 
 	struct psee_streamer *streamer;
 	struct v4l2_subdev *subdev;

@@ -417,9 +417,7 @@ static int psee_graph_dma_init_one(struct psee_composite_device *pdev,
 	unsigned int index;
 	int ret;
 
-	printk(KERN_WARNING "COMPOSITE GRAPH DMA 1\n");
 	of_property_read_u32(node, "reg", &index);
-printk(KERN_WARNING "COMPOSITE GRAPH DMA 2\t%d\n", index);
 	/* Originally there was a direction information on each port, to manage the DMA accordingly,
 	 * but now the binding states that there is exactly one port, acting as input.
 	 * Another may be added to inject data in the pipeline
@@ -429,19 +427,16 @@ printk(KERN_WARNING "COMPOSITE GRAPH DMA 2\t%d\n", index);
 	dma = devm_kzalloc(pdev->dev, sizeof(*dma), GFP_KERNEL);
 	if (dma == NULL)
 		return -ENOMEM;
-printk(KERN_WARNING "COMPOSITE GRAPH DMA 3\n");
 	ret = psee_dma_init(pdev, dma, type, index,
 		platform_get_resource(pdev->platform_dev, IORESOURCE_MEM, index));
 	if (ret < 0) {
 		dev_err(pdev->dev, "%pOF initialization failed\n", node);
 		return ret;
 	}
-printk(KERN_WARNING "COMPOSITE GRAPH DMA 4\n");
 	list_add_tail(&dma->list, &pdev->dmas);
 
 	pdev->v4l2_caps |= type == V4L2_BUF_TYPE_VIDEO_CAPTURE
 			 ? V4L2_CAP_VIDEO_CAPTURE : V4L2_CAP_VIDEO_OUTPUT;
-printk(KERN_WARNING "COMPOSITE GRAPH DMA 5\n");
 	return 0;
 }
 
@@ -450,7 +445,6 @@ static int psee_graph_dma_init(struct psee_composite_device *pdev)
 	struct device_node *ports;
 	struct device_node *port;
 	int ret = 0;
-printk(KERN_WARNING "COMPOSITE DMA 1\n");
 	ports = of_get_child_by_name(pdev->dev->of_node, "ports");
 	if (ports == NULL) {
 		dev_err(pdev->dev, "ports node not present\n");
@@ -459,7 +453,6 @@ printk(KERN_WARNING "COMPOSITE DMA 1\n");
 
 	for_each_child_of_node(ports, port) {
 		ret = psee_graph_dma_init_one(pdev, port);
-		printk(KERN_WARNING "COMPOSITE DMA 2\n");
 		if (ret) {
 			of_node_put(port);
 			break;
@@ -467,7 +460,6 @@ printk(KERN_WARNING "COMPOSITE DMA 1\n");
 	}
 
 	of_node_put(ports);
-	printk(KERN_WARNING "COMPOSITE GRAPH 3\n");
 	return ret;
 }
 
@@ -490,25 +482,21 @@ static int psee_graph_init(struct psee_composite_device *pdev)
 	int ret;
 
 	/* Init the DMA channels. */
-	printk(KERN_WARNING "COMPOSITE GRAPH 1\n");
 
 	ret = psee_graph_dma_init(pdev);
 	if (ret < 0) {
 		dev_err(pdev->dev, "DMA initialization failed\n");
 		goto done;
 	}
-printk(KERN_WARNING "COMPOSITE GRAPH 2\n");
 
 	v4l2_async_nf_init(&pdev->notifier, &pdev->v4l2_dev);
 
 	/* Parse the graph to extract a list of subdevice DT nodes. */
-	printk(KERN_WARNING "COMPOSITE GRAPH 3\n");
 	ret = psee_graph_parse(pdev);
 	if (ret < 0) {
 		dev_err(pdev->dev, "graph parsing failed\n");
 		goto done;
 	}
-printk(KERN_WARNING "COMPOSITE GRAPH 4\n");
 	if (list_empty(&pdev->notifier.waiting_list)) {
 		dev_err(pdev->dev, "no subdev found in graph\n");
 		ret = -ENOENT;
@@ -523,7 +511,6 @@ printk(KERN_WARNING "COMPOSITE GRAPH 4\n");
 		dev_err(pdev->dev, "notifier registration failed\n");
 		goto done;
 	}
-printk(KERN_WARNING "COMPOSITE GRAPH 5\n");
 	ret = 0;
 
 done:
@@ -573,7 +560,6 @@ static int psee_composite_v4l2_init(struct psee_composite_device *pdev)
 
 static int psee_composite_probe(struct platform_device *platform_dev)
 {
-		printk(KERN_WARNING "COMPOSITE PROBE 1\n");
 
 	struct psee_composite_device *pdev;
 	int ret;
@@ -581,7 +567,6 @@ static int psee_composite_probe(struct platform_device *platform_dev)
 	pdev = devm_kzalloc(&platform_dev->dev, sizeof(*pdev), GFP_KERNEL);
 	if (!pdev)
 		return -ENOMEM;
-printk(KERN_WARNING "COMPOSITE PROBE 2\n");
 
 	pdev->dev = &platform_dev->dev;
 	pdev->platform_dev = platform_dev;
@@ -590,17 +575,14 @@ printk(KERN_WARNING "COMPOSITE PROBE 2\n");
 	ret = psee_composite_v4l2_init(pdev);
 	if (ret < 0)
 		return ret;
-printk(KERN_WARNING "COMPOSITE PROBE 3\n");
 
 	ret = psee_graph_init(pdev);
 	if (ret < 0)
 		goto error;
-printk(KERN_WARNING "COMPOSITE PROBE 4\n");
 
 	platform_set_drvdata(platform_dev, pdev);
 
 	dev_info(pdev->dev, "device registered\n");
-printk(KERN_WARNING "COMPOSITE PROBE 5\n");
 
 	return 0;
 
