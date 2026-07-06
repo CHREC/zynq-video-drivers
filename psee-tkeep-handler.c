@@ -26,7 +26,7 @@
 union global_ctrl {
 	struct {
 		u32 enable:1;
-		u32 reset:1;
+		u32 :1;
 		u32 clear:1;
 		u32:29;
 	};
@@ -373,8 +373,8 @@ static int probe(struct platform_device *pdev)
 	clk_prepare_enable(tkhdlr->clk);
 
 	/* Reset registers to a known configuration */
-	ctrl.reset = 1;
-	// write_reg(tkhdlr, REG_CONTROL, ctrl.raw);
+	ctrl.clear = 1;
+	write_reg(tkhdlr, REG_CONTROL, ctrl.raw);
 	/* Initialize V4L2 subdevice and media entity */
 	subdev = &tkhdlr->subdev;
 	v4l2_subdev_init(subdev, &ops);
