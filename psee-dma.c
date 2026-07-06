@@ -891,7 +891,7 @@ static int timeout_s_ctrl(struct v4l2_ctrl *ctrl)
 		timeout = ctrl->val;
 		timeout *= clk_get_rate(dma->clk);
 		timeout = div_u64(timeout, 1000000);///= 1000000; /* val is in us */
-		printk(KERN_WARNING "PSEE TIMEOUT: %d\n" timeout);
+		printk(KERN_WARNING "PSEE TIMEOUT: %d\n", timeout);
 		write_reg(dma, REG_TLAST_TIMEOUT, timeout);
 		return 0;
 	default:
