@@ -891,6 +891,7 @@ static int timeout_s_ctrl(struct v4l2_ctrl *ctrl)
 		timeout = ctrl->val;
 		timeout *= clk_get_rate(dma->clk);
 		timeout = div_u64(timeout, 1000000);///= 1000000; /* val is in us */
+		printk(KERN_WARNING "PSEE TIMEOUT: %d\n" timeout);
 		write_reg(dma, REG_TLAST_TIMEOUT, timeout);
 		return 0;
 	default:
@@ -951,7 +952,7 @@ int psee_dma_init(struct psee_composite_device *psee_dev, struct psee_dma *dma,
 		goto error;
 	}
 	clk_prepare_enable(dma->clk);
-	dev_dbg(dev, "Got clk at %lu", clk_get_rate(dma->clk));
+	dev_warn(dev, "Got clk at %lu", clk_get_rate(dma->clk));
 
 	/* This is hard-coded for now, to be re-evaluated when supporting planar-formats */
 	dma->transfer_size = DEFAULT_PACKET_LENGTH;
@@ -1026,8 +1027,8 @@ int psee_dma_init(struct psee_composite_device *psee_dev, struct psee_dma *dma,
 
 	/* Reset the RTL */
 
-	control.reset = 1;
-	// write_reg(dma, REG_CONTROL, control.raw);
+	control.clear = 1;
+	write_reg(dma, REG_CONTROL, control.raw);
 	/* Set packet size to image size in bus words */
 	write_reg(dma, REG_PACKET_LENGTH, dma->transfer_size / 8);
 	/* Initialize the V4L2-ctl handler to tune the behavior */
@@ -1043,7 +1044,7 @@ int psee_dma_init(struct psee_composite_device *psee_dev, struct psee_dma *dma,
 
 	/* Set a timeout symbol that works in both EVT21 and EVT3 */
 	write_reg(dma, REG_TLAST_TIMEOUT_EVT_LSB, DEFAULT_MARKER);
-
+	write_reg(dma, REG_TLAST_TIMEOUT_EVT_LSB + 4, DEFAULT_MARKER); // writing to the MSB too
 	/* Register a control to enable/disable timeout on transfers */
 	v4l2_ctrl_new_custom(ctrl_hdr, &timeout_enable_control, dma);
 	/* And one to set the timeout duration */
