@@ -445,6 +445,7 @@ struct psee_dma_buffer {
 
 static void psee_dma_complete(void *param, const struct dmaengine_result *result)
 {
+	printk(KERN_WARNING "PSEE DMA DMA COMPLETE\n");
 	struct psee_dma_buffer *buf = param;
 	struct psee_dma *dma = buf->dma;
 
@@ -491,6 +492,7 @@ static int buffer_prepare(struct vb2_buffer *vb)
 
 static void buffer_queue(struct vb2_buffer *vb)
 {
+	printk(KERN_WARNING "PSEE DMA BUFFER QUEUE\n");
 	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
 	struct psee_dma *dma = vb2_get_drv_priv(vb->vb2_queue);
 	struct psee_dma_buffer *buf = to_psee_dma_buffer(vbuf);
@@ -532,6 +534,7 @@ static void buffer_queue(struct vb2_buffer *vb)
 
 static int start_streaming(struct vb2_queue *vq, unsigned int count)
 {
+	printk(KERN_WARNING "PSEE DMA START STREAMING\n");
 	struct psee_dma *dma = vb2_get_drv_priv(vq);
 	struct psee_dma_buffer *buf, *nbuf;
 	struct psee_pipeline *pipe;
@@ -576,6 +579,7 @@ static int start_streaming(struct vb2_queue *vq, unsigned int count)
 	/* Enable the packetizer */
 	control = (union global_ctrl){ .enable = 1 };
 	write_reg(dma, REG_CONTROL, control.raw);
+	printk(KERN_WARNING "PSEE DMA STARTED PACKETIZER\n");
 	return 0;
 
 error_stop:
