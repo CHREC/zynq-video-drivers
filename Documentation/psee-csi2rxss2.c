@@ -4,7 +4,7 @@
  *
  * Copyright (C) 2016 - 2020 Xilinx, Inc.
  *
- * Contacts: Vishal Sagar <vishal.sagar@xilinx.com>
+ * Modified by Prophesee to run without Video Format Bridge
  *
  */
 #include <linux/clk.h>
@@ -23,7 +23,16 @@
 #include <media/v4l2-ctrls.h>
 #include <media/v4l2-fwnode.h>
 #include <media/v4l2-subdev.h>
-#include "xilinx-vip.h"
+
+/* define media-bus types in case it's not present in the kernel */
+#include "psee-format.h"
+
+/*
+ * Pad IDs. IP cores with multiple inputs or outputs should define
+ * their own values.
+ */
+#define XVIP_PAD_SINK			0
+#define XVIP_PAD_SOURCE			1
 
 /* Register register map */
 #define XCSI_CCR_OFFSET		0x00
@@ -49,7 +58,6 @@
 
 #define XCSI_ISR_FR		BIT(31)
 #define XCSI_ISR_VCXFE		BIT(30)
-#define XCSI_ISR_YUV420		BIT(28)
 #define XCSI_ISR_WCC		BIT(22)
 #define XCSI_ISR_ILC		BIT(21)
 #define XCSI_ISR_SPFIFOF	BIT(20)
@@ -71,7 +79,7 @@
 #define XCSI_ISR_VC0FSYNCERR	BIT(1)
 #define XCSI_ISR_VC0FLVLERR	BIT(0)
 
-#define XCSI_ISR_ALLINTR_MASK	(0xd07e3fff)
+#define XCSI_ISR_ALLINTR_MASK	(0xc07e3fff)
 
 /*
  * Removed VCXFE mask as it doesn't exist in IER
@@ -139,7 +147,6 @@ struct xcsi2rxss_event {
 static const struct xcsi2rxss_event xcsi2rxss_events[] = {
 	{ XCSI_ISR_FR, "Frame Received" },
 	{ XCSI_ISR_VCXFE, "VCX Frame Errors" },
-	{ XCSI_ISR_YUV420, "YUV 420 Word Count Errors" },
 	{ XCSI_ISR_WCC, "Word Count Errors" },
 	{ XCSI_ISR_ILC, "Invalid Lane Count Error" },
 	{ XCSI_ISR_SPFIFOF, "Short Packet FIFO OverFlow Error" },
@@ -169,7 +176,6 @@ static const struct xcsi2rxss_event xcsi2rxss_events[] = {
  * and media bus formats
  */
 static const u32 xcsi2dt_mbus_lut[][2] = {
-	{ MIPI_CSI2_DT_YUV420_8B, MEDIA_BUS_FMT_VYYUYY8_1X24 },
 	{ MIPI_CSI2_DT_YUV422_8B, MEDIA_BUS_FMT_UYVY8_1X16 },
 	{ MIPI_CSI2_DT_YUV422_10B, MEDIA_BUS_FMT_UYVY10_1X20 },
 	{ MIPI_CSI2_DT_RGB444, 0 },
@@ -197,10 +203,10 @@ static const u32 xcsi2dt_mbus_lut[][2] = {
 	{ MIPI_CSI2_DT_RAW16, MEDIA_BUS_FMT_SGBRG16_1X16 },
 	{ MIPI_CSI2_DT_RAW16, MEDIA_BUS_FMT_SGRBG16_1X16 },
 	{ MIPI_CSI2_DT_RAW20, 0 },
-	{ MIPI_CSI2_DT_USER_DEFINED(0), 0x5300 },
-	{ MIPI_CSI2_DT_USER_DEFINED(0), 0x5301 },
-	{ MIPI_CSI2_DT_USER_DEFINED(0), 0x5302 },
-	{ MIPI_CSI2_DT_USER_DEFINED(0), 0x5303 },
+	{ MIPI_CSI2_DT_USER_DEFINED(0), MEDIA_BUS_FMT_PSEE_EVT2 },
+	{ MIPI_CSI2_DT_USER_DEFINED(0), MEDIA_BUS_FMT_PSEE_EVT21ME },
+	{ MIPI_CSI2_DT_USER_DEFINED(0), MEDIA_BUS_FMT_PSEE_EVT21 },
+	{ MIPI_CSI2_DT_USER_DEFINED(0), MEDIA_BUS_FMT_PSEE_EVT3 },
 };
 
 /**
@@ -262,13 +268,16 @@ to_xcsi2rxssstate(struct v4l2_subdev *subdev)
  */
 static inline u32 xcsi2rxss_read(struct xcsi2rxss_state *xcsi2rxss, u32 addr)
 {
+	printk(KERN_WARNING "CSI2RX reading REG:0x%08X\n", addr);
 	return ioread32(xcsi2rxss->iomem + addr);
 }
 
 static inline void xcsi2rxss_write(struct xcsi2rxss_state *xcsi2rxss, u32 addr,
 				   u32 value)
 {
+	printk(KERN_WARNING "CSI2RX writing REG:0x%08X VAL:0x%08X\n", addr, value);
 	iowrite32(value, xcsi2rxss->iomem + addr);
+	printk(KERN_WARNING "CSI2RX wrote REG:0x%08X VAL:0x%08X\n", addr, value);
 }
 
 static inline void xcsi2rxss_clr(struct xcsi2rxss_state *xcsi2rxss, u32 addr,
@@ -481,21 +490,18 @@ static int xcsi2rxss_log_status(struct v4l2_subdev *sd)
 static struct v4l2_subdev *xcsi2rxss_get_remote_subdev(struct media_pad *local)
 {
 	struct media_pad *remote;
-	struct v4l2_subdev *sd;
 
 	remote = media_pad_remote_pad_first(local);
 	if (!remote || !is_media_entity_v4l2_subdev(remote->entity))
-		sd = NULL;
-	else
-		sd = media_entity_to_v4l2_subdev(remote->entity);
+		return NULL;
 
-	return sd;
+	return media_entity_to_v4l2_subdev(remote->entity);
 }
 
 static int xcsi2rxss_start_stream(struct xcsi2rxss_state *state)
 {
 	int ret = 0;
-
+	printk(KERN_WARNING "CSI RX STREAM STARTING");
 	/* enable core */
 	xcsi2rxss_set(state, XCSI_CCR_OFFSET, XCSI_CCR_ENABLE);
 
@@ -505,41 +511,21 @@ static int xcsi2rxss_start_stream(struct xcsi2rxss_state *state)
 		return ret;
 	}
 
+	/* configure number of lanes */
+	xcsi2rxss_write(state, XCSI_PCR_OFFSET, state->max_num_lanes - 1);
+
 	/* enable interrupts */
 	xcsi2rxss_clr(state, XCSI_GIER_OFFSET, XCSI_GIER_GIE);
 	xcsi2rxss_write(state, XCSI_IER_OFFSET, XCSI_IER_INTR_MASK);
 	xcsi2rxss_set(state, XCSI_GIER_OFFSET, XCSI_GIER_GIE);
 
 	state->streaming = true;
-
-	state->rsubdev =
-		xcsi2rxss_get_remote_subdev(&state->pads[XVIP_PAD_SINK]);
-
-	if (!state->rsubdev) {
-		ret = -ENODEV;
-		goto exit_start_stream;
-	}
-
-	ret = v4l2_subdev_call(state->rsubdev, video, s_stream, 1);
-
-exit_start_stream:
-	if (ret) {
-		/* disable interrupts */
-		xcsi2rxss_clr(state, XCSI_IER_OFFSET, XCSI_IER_INTR_MASK);
-		xcsi2rxss_clr(state, XCSI_GIER_OFFSET, XCSI_GIER_GIE);
-
-		/* disable core */
-		xcsi2rxss_clr(state, XCSI_CCR_OFFSET, XCSI_CCR_ENABLE);
-		state->streaming = false;
-	}
-
+	printk(KERN_WARNING "CSI RX STREAM STARTING RETURN");
 	return ret;
 }
 
 static void xcsi2rxss_stop_stream(struct xcsi2rxss_state *state)
 {
-	v4l2_subdev_call(state->rsubdev, video, s_stream, 0);
-
 	/* disable interrupts */
 	xcsi2rxss_clr(state, XCSI_IER_OFFSET, XCSI_IER_INTR_MASK);
 	xcsi2rxss_clr(state, XCSI_GIER_OFFSET, XCSI_GIER_GIE);
@@ -564,7 +550,7 @@ static irqreturn_t xcsi2rxss_irq_handler(int irq, void *data)
 	struct xcsi2rxss_state *state = (struct xcsi2rxss_state *)data;
 	struct device *dev = state->dev;
 	u32 status;
-
+printk(KERN_WARNING "CSI RX STREAM IRQ HANDLING");
 	status = xcsi2rxss_read(state, XCSI_ISR_OFFSET) & XCSI_ISR_ALLINTR_MASK;
 	xcsi2rxss_write(state, XCSI_ISR_OFFSET, status);
 
@@ -597,11 +583,8 @@ static irqreturn_t xcsi2rxss_irq_handler(int irq, void *data)
 	 * Stream line buffer full
 	 * This means there is a backpressure from downstream IP
 	 */
-	if (status & (XCSI_ISR_SLBF | XCSI_ISR_YUV420)) {
-		if (status & XCSI_ISR_SLBF)
-			dev_alert_ratelimited(dev, "Stream Line Buffer Full!\n");
-		if (status & XCSI_ISR_YUV420)
-			dev_alert_ratelimited(dev, "YUV 420 Word count error!\n");
+	if (status & XCSI_ISR_SLBF) {
+		dev_alert_ratelimited(dev, "Stream Line Buffer Full!\n");
 
 		/* disable interrupts */
 		xcsi2rxss_clr(state, XCSI_IER_OFFSET, XCSI_IER_INTR_MASK);
@@ -689,28 +672,21 @@ __xcsi2rxss_get_pad_format(struct xcsi2rxss_state *xcsi2rxss,
 			   struct v4l2_subdev_state *sd_state,
 			   unsigned int pad, u32 which)
 {
-	struct v4l2_mbus_framefmt *get_fmt;
-
 	switch (which) {
 	case V4L2_SUBDEV_FORMAT_TRY:
-		get_fmt = v4l2_subdev_get_try_format(&xcsi2rxss->subdev,
-						     sd_state, pad);
-		break;
+		return v4l2_subdev_get_try_format(&xcsi2rxss->subdev,
+						  sd_state, pad);
 	case V4L2_SUBDEV_FORMAT_ACTIVE:
-		get_fmt = &xcsi2rxss->format;
-		break;
+		return &xcsi2rxss->format;
 	default:
-		get_fmt = NULL;
-		break;
+		return NULL;
 	}
-
-	return get_fmt;
 }
 
 /**
  * xcsi2rxss_init_cfg - Initialise the pad format config to default
  * @sd: Pointer to V4L2 Sub device structure
- * @cfg: Pointer to sub device pad information structure
+ * @sd_state: Pointer to sub device state structure
  *
  * This function is used to initialize the pad format with the default
  * values.
@@ -737,7 +713,7 @@ static int xcsi2rxss_init_cfg(struct v4l2_subdev *sd,
 /**
  * xcsi2rxss_get_format - Get the pad format
  * @sd: Pointer to V4L2 Sub device structure
- * @cfg: Pointer to sub device pad information structure
+ * @sd_state: Pointer to sub device state structure
  * @fmt: Pointer to pad level media bus format
  *
  * This function is used to get the pad format information.
@@ -749,30 +725,20 @@ static int xcsi2rxss_get_format(struct v4l2_subdev *sd,
 				struct v4l2_subdev_format *fmt)
 {
 	struct xcsi2rxss_state *xcsi2rxss = to_xcsi2rxssstate(sd);
-	struct v4l2_mbus_framefmt *get_fmt;
-	int ret = 0;
 
 	mutex_lock(&xcsi2rxss->lock);
-
-	get_fmt = __xcsi2rxss_get_pad_format(xcsi2rxss, sd_state, fmt->pad,
-					     fmt->which);
-	if (!get_fmt) {
-		ret = -EINVAL;
-		goto unlock_get_format;
-	}
-
-	fmt->format = *get_fmt;
-
-unlock_get_format:
+	fmt->format = *__xcsi2rxss_get_pad_format(xcsi2rxss, sd_state,
+						  fmt->pad,
+						  fmt->which);
 	mutex_unlock(&xcsi2rxss->lock);
 
-	return ret;
+	return 0;
 }
 
 /**
  * xcsi2rxss_set_format - This is used to set the pad format
  * @sd: Pointer to V4L2 Sub device structure
- * @cfg: Pointer to sub device pad information structure
+ * @sd_state: Pointer to sub device state structure
  * @fmt: Pointer to pad level media bus format
  *
  * This function is used to set the pad format. Since the pad format is fixed
@@ -789,7 +755,6 @@ static int xcsi2rxss_set_format(struct v4l2_subdev *sd,
 	struct xcsi2rxss_state *xcsi2rxss = to_xcsi2rxssstate(sd);
 	struct v4l2_mbus_framefmt *__format;
 	u32 dt;
-	int ret = 0;
 
 	mutex_lock(&xcsi2rxss->lock);
 
@@ -800,15 +765,12 @@ static int xcsi2rxss_set_format(struct v4l2_subdev *sd,
 	 */
 	__format = __xcsi2rxss_get_pad_format(xcsi2rxss, sd_state,
 					      fmt->pad, fmt->which);
-	if (!__format) {
-		ret = -EINVAL;
-		goto unlock_set_format;
-	}
 
 	/* only sink pad format can be updated */
 	if (fmt->pad == XVIP_PAD_SOURCE) {
 		fmt->format = *__format;
-		goto unlock_set_format;
+		mutex_unlock(&xcsi2rxss->lock);
+		return 0;
 	}
 
 	/*
@@ -817,7 +779,8 @@ static int xcsi2rxss_set_format(struct v4l2_subdev *sd,
 	 * other RAW, YUV422 8/10 or RGB888, set appropriate media bus format.
 	 */
 	dt = xcsi2rxss_get_dt(fmt->format.code);
-	if (dt != xcsi2rxss->datatype && dt != MIPI_CSI2_DT_RAW8) {
+	if (dt != xcsi2rxss->datatype && dt != MIPI_CSI2_DT_RAW8 &&
+			dt != MIPI_CSI2_DT_USER_DEFINED(0)) {
 		dev_dbg(xcsi2rxss->dev, "Unsupported media bus format");
 		/* set the default format for the data type */
 		fmt->format.code = xcsi2rxss_get_nth_mbus(xcsi2rxss->datatype,
@@ -825,11 +788,9 @@ static int xcsi2rxss_set_format(struct v4l2_subdev *sd,
 	}
 
 	*__format = fmt->format;
-
-unlock_set_format:
 	mutex_unlock(&xcsi2rxss->lock);
 
-	return ret;
+	return 0;
 }
 
 /*
@@ -866,6 +827,39 @@ static int xcsi2rxss_enum_mbus_code(struct v4l2_subdev *sd,
 	return ret;
 }
 
+#ifdef CONFIG_VIDEO_ADV_DEBUG
+static int g_register(struct v4l2_subdev *sd, struct v4l2_dbg_register *reg) {
+	struct xcsi2rxss_state *state = to_xcsi2rxssstate(sd);
+
+	/* check if the address is aligned */
+	if (reg->reg & 3ul)
+		return -EINVAL;
+
+	/* check if the provided address is either in CSI-Rx or D-PHY memory space */
+	if (reg->reg >= 0x2000)
+		return -EINVAL;
+
+	reg->val = xcsi2rxss_read(state, reg->reg);
+	reg->size = 4;
+	return 0;
+}
+
+static int s_register(struct v4l2_subdev *sd, const struct v4l2_dbg_register *reg) {
+	struct xcsi2rxss_state *state = to_xcsi2rxssstate(sd);
+
+	/* check if the address is aligned */
+	if (reg->reg & 3ul)
+		return -EINVAL;
+
+	/* check if the provided address is either in CSI-Rx or D-PHY memory space */
+	if (reg->reg >= 0x2000)
+		return -EINVAL;
+
+	xcsi2rxss_write(state, reg->reg, reg->val);
+	return 0;
+}
+#endif
+
 /* -----------------------------------------------------------------------------
  * Media Operations
  */
@@ -876,6 +870,10 @@ static const struct media_entity_operations xcsi2rxss_media_ops = {
 
 static const struct v4l2_subdev_core_ops xcsi2rxss_core_ops = {
 	.log_status = xcsi2rxss_log_status,
+#ifdef CONFIG_VIDEO_ADV_DEBUG
+	.g_register = g_register,
+	.s_register = s_register,
+#endif
 };
 
 static const struct v4l2_subdev_video_ops xcsi2rxss_video_ops = {
@@ -901,11 +899,11 @@ static int xcsi2rxss_parse_of(struct xcsi2rxss_state *xcsi2rxss)
 	struct device *dev = xcsi2rxss->dev;
 	struct device_node *node = dev->of_node;
 
-	struct fwnode_handle *ep;
+	struct fwnode_handle *ep, *remote;
 	struct v4l2_fwnode_endpoint vep = {
 		.bus_type = V4L2_MBUS_CSI2_DPHY
 	};
-	bool en_csi_v20, vfb;
+	bool en_csi_v20;
 	int ret;
 
 	en_csi_v20 = of_property_read_bool(node, "xlnx,en-csi-v2-0");
@@ -923,7 +921,6 @@ static int xcsi2rxss_parse_of(struct xcsi2rxss_state *xcsi2rxss)
 	}
 
 	switch (xcsi2rxss->datatype) {
-	case MIPI_CSI2_DT_YUV420_8B:
 	case MIPI_CSI2_DT_YUV422_8B:
 	case MIPI_CSI2_DT_RGB444:
 	case MIPI_CSI2_DT_RGB555:
@@ -936,6 +933,7 @@ static int xcsi2rxss_parse_of(struct xcsi2rxss_state *xcsi2rxss)
 	case MIPI_CSI2_DT_RAW10:
 	case MIPI_CSI2_DT_RAW12:
 	case MIPI_CSI2_DT_RAW14:
+	case MIPI_CSI2_DT_USER_DEFINED(0):
 		break;
 	case MIPI_CSI2_DT_YUV422_10B:
 	case MIPI_CSI2_DT_RAW16:
@@ -953,9 +951,8 @@ static int xcsi2rxss_parse_of(struct xcsi2rxss_state *xcsi2rxss)
 		return ret;
 	}
 
-	vfb = of_property_read_bool(node, "xlnx,vfb");
-	if (!vfb) {
-		dev_err(dev, "operation without VFB is not supported\n");
+	if (of_property_read_bool(node, "xlnx,vfb")) {
+		dev_warn(dev, "This driver is meant to be used without VFB\n");
 		return -EINVAL;
 	}
 
@@ -968,16 +965,40 @@ static int xcsi2rxss_parse_of(struct xcsi2rxss_state *xcsi2rxss)
 	}
 
 	ret = v4l2_fwnode_endpoint_parse(ep, &vep);
-	fwnode_handle_put(ep);
 	if (ret) {
 		dev_err(dev, "error parsing sink port");
-		return ret;
+		goto err_ep_put;
 	}
 
 	dev_dbg(dev, "mipi number lanes = %d\n",
 		vep.bus.mipi_csi2.num_data_lanes);
 
 	xcsi2rxss->max_num_lanes = vep.bus.mipi_csi2.num_data_lanes;
+
+	remote = fwnode_graph_get_remote_endpoint(ep);
+	if (!remote) {
+		dev_err(dev, "no remote endpoint found");
+		goto err_ep_put;
+	}
+
+	ret = v4l2_fwnode_endpoint_parse(remote, &vep);
+	if (ret) {
+		dev_err(dev, "error parsing remote port");
+		goto err_remote_put;
+	}
+
+	fwnode_handle_put(remote);
+	fwnode_handle_put(ep);
+
+	dev_dbg(dev, "sensor number lanes = %d\n",
+		vep.bus.mipi_csi2.num_data_lanes);
+
+	if (vep.bus.mipi_csi2.num_data_lanes > xcsi2rxss->max_num_lanes) {
+		dev_err(dev, "invalid sensor configuration");
+		return -EINVAL;
+	}
+
+	xcsi2rxss->max_num_lanes = min(xcsi2rxss->max_num_lanes, vep.bus.mipi_csi2.num_data_lanes);
 
 	ep = fwnode_graph_get_endpoint_by_id(dev_fwnode(dev),
 					     XVIP_PAD_SOURCE, 0,
@@ -996,10 +1017,18 @@ static int xcsi2rxss_parse_of(struct xcsi2rxss_state *xcsi2rxss)
 		xcsi2rxss->datatype);
 
 	return 0;
+
+err_remote_put:
+	fwnode_handle_put(remote);
+err_ep_put:
+	fwnode_handle_put(ep);
+	return ret;
 }
 
 static int xcsi2rxss_probe(struct platform_device *pdev)
 {
+		printk(KERN_WARNING "XCSI2RXSS PROBE 1\n");
+
 	struct v4l2_subdev *subdev;
 	struct xcsi2rxss_state *xcsi2rxss;
 	int num_clks = ARRAY_SIZE(xcsi2rxss_clks);
@@ -1074,6 +1103,7 @@ static int xcsi2rxss_probe(struct platform_device *pdev)
 	/* Initialize V4L2 subdevice and media entity */
 	subdev = &xcsi2rxss->subdev;
 	v4l2_subdev_init(subdev, &xcsi2rxss_ops);
+	subdev->entity.function = MEDIA_ENT_F_VID_IF_BRIDGE;
 	subdev->dev = dev;
 	strscpy(subdev->name, dev_name(dev), sizeof(subdev->name));
 	subdev->flags |= V4L2_SUBDEV_FL_HAS_EVENTS | V4L2_SUBDEV_FL_HAS_DEVNODE;
@@ -1124,7 +1154,7 @@ MODULE_DEVICE_TABLE(of, xcsi2rxss_of_id_table);
 
 static struct platform_driver xcsi2rxss_driver = {
 	.driver = {
-		.name		= "xilinx-csi2rxss",
+		.name		= "psee-csi2rxss",
 		.of_match_table	= xcsi2rxss_of_id_table,
 	},
 	.probe			= xcsi2rxss_probe,
