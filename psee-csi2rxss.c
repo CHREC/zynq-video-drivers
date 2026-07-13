@@ -268,16 +268,16 @@ to_xcsi2rxssstate(struct v4l2_subdev *subdev)
  */
 static inline u32 xcsi2rxss_read(struct xcsi2rxss_state *xcsi2rxss, u32 addr)
 {
-	printk(KERN_WARNING "CSI2RX reading REG:0x%08X\n", addr);
+	// printk(KERN_WARNING "CSI2RX reading REG:0x%08X\n", addr);
 	return ioread32(xcsi2rxss->iomem + addr);
 }
 
 static inline void xcsi2rxss_write(struct xcsi2rxss_state *xcsi2rxss, u32 addr,
 				   u32 value)
 {
-	printk(KERN_WARNING "CSI2RX writing REG:0x%08X VAL:0x%08X\n", addr, value);
+	// printk(KERN_WARNING "CSI2RX writing REG:0x%08X VAL:0x%08X\n", addr, value);
 	iowrite32(value, xcsi2rxss->iomem + addr);
-	printk(KERN_WARNING "CSI2RX wrote REG:0x%08X VAL:0x%08X\n", addr, value);
+	// printk(KERN_WARNING "CSI2RX wrote REG:0x%08X VAL:0x%08X\n", addr, value);
 }
 
 static inline void xcsi2rxss_clr(struct xcsi2rxss_state *xcsi2rxss, u32 addr,
@@ -550,7 +550,7 @@ static irqreturn_t xcsi2rxss_irq_handler(int irq, void *data)
 	struct xcsi2rxss_state *state = (struct xcsi2rxss_state *)data;
 	struct device *dev = state->dev;
 	u32 status;
-printk(KERN_WARNING "CSI RX STREAM IRQ HANDLING");
+// printk(KERN_WARNING "CSI RX STREAM IRQ HANDLING");
 	status = xcsi2rxss_read(state, XCSI_ISR_OFFSET) & XCSI_ISR_ALLINTR_MASK;
 	xcsi2rxss_write(state, XCSI_ISR_OFFSET, status);
 
