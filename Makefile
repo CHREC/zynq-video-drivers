@@ -4,7 +4,7 @@ psee-video-objs += psee-dma.o psee-composite.o
 SRC := $(shell pwd)
 GIT_HASH = $(shell git rev-parse --short=8 HEAD) 
 all:
-	$(MAKE) -C $(KERNEL_SRC) M=$(SRC) -DZYNQGIT_VER=$(GIT_HASH)
+	$(MAKE) -C $(KERNEL_SRC) M=$(SRC) CFLAGS="-DZYNQGIT_VER=$(GIT_HASH)"
 
 modules_install:
 	$(MAKE) -C $(KERNEL_SRC) M=$(SRC) modules_install
