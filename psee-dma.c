@@ -79,15 +79,15 @@ union global_cfg {
  */
 static inline u32 read_reg(struct psee_dma *dma, u32 addr)
 {
-	printk(KERN_WARNING "PSEE VIDEO read REG:0x%08X\n", addr);
+	//printk(KERN_WARNING "PSEE VIDEO read REG:0x%08X\n", addr);
 	return ioread32(dma->iomem + addr);
 }
 
 static inline void write_reg(struct psee_dma *dma, u32 addr, u32 value)
 {
-	printk(KERN_WARNING "PSEE VIDEO writing REG:0x%08X VAL:0x%08X\n", addr, value);
+	//printk(KERN_WARNING "PSEE VIDEO writing REG:0x%08X VAL:0x%08X\n", addr, value);
 	iowrite32(value, dma->iomem + addr);
-	printk(KERN_WARNING "PSEE VIDEO wrote REG:0x%08X VAL:0x%08X\n", addr, value);
+	//printk(KERN_WARNING "PSEE VIDEO wrote REG:0x%08X VAL:0x%08X\n", addr, value);
 }
 
 // static inline u64 read_reg64(struct psee_dma *dma, u32 addr)
@@ -176,14 +176,14 @@ static int verify_format(struct psee_dma *dma)
  */
 static int start_stop_recursive(struct media_entity *entity, bool start)
 {
-	printk(KERN_WARNING "PSEE VIDEO START STOP RECURSIVE\n");
+	//printk(KERN_WARNING "PSEE VIDEO START STOP RECURSIVE\n");
 	struct device *dev = entity->graph_obj.mdev->dev;
 	struct media_pad *pad, *remote;
 	struct v4l2_subdev *subdev = media_entity_to_v4l2_subdev(entity);
 	int ret;
 
 	dev_dbg(dev, "%s on %s", start ? "start" : "stop", entity->name);
-	printk(KERN_WARNING "PSEE VIDEO %sing device %s\n", start ? "start" : "stopp", entity->name);
+	//printk(KERN_WARNING "PSEE VIDEO %sing device %s\n", start ? "start" : "stopp", entity->name);
 	/* When starting, start the receiver before the producer */
 	if (start) {
 		ret = v4l2_subdev_call(subdev, video, s_stream, start);
@@ -192,7 +192,7 @@ static int start_stop_recursive(struct media_entity *entity, bool start)
 				start, subdev->name, ret);
 			return ret;
 		}
-		printk(KERN_WARNING "PSEE VIDEO STARTED device %s\n", entity->name);
+		//printk(KERN_WARNING "PSEE VIDEO STARTED device %s\n", entity->name);
 	}
 
 	media_entity_for_each_pad(entity, pad) {
@@ -274,7 +274,7 @@ static int psee_pipeline_start_stop(struct psee_pipeline *pipe, bool start)
 	/* The video device is handled in start_streaming, start operation on
 	 * the first remote entity
 	 */
-	printk(KERN_WARNING "PSEE VIDEO %sing the pipeline\n", start ? "start" : "stop");
+	//printk(KERN_WARNING "PSEE VIDEO %sing the pipeline\n", start ? "start" : "stop");
 	pad = media_pad_remote_pad_first(&dma->pad);
 	if (!pad)
 		return -ENODEV;
@@ -313,19 +313,19 @@ static int psee_pipeline_set_stream(struct psee_pipeline *pipe, bool on)
 	mutex_lock(&pipe->lock);
 	if (on) {
 		if (pipe->stream_count == pipe->num_dmas - 1) {
-			printk(KERN_WARNING "PSEE VIDEO starting the pipeline\n");
+			//printk(KERN_WARNING "PSEE VIDEO starting the pipeline\n");
 
 			ret = psee_pipeline_start_stop(pipe, true);
-			printk(KERN_WARNING "PSEE VIDEO tried to start pipeline with return: %d\n", ret);
+			//printk(KERN_WARNING "PSEE VIDEO tried to start pipeline with return: %d\n", ret);
 			if (ret < 0)
 				goto done;
 		}
 		pipe->stream_count++;
 	} else {
-		printk(KERN_WARNING "PSEE VIDEO stopping the pipeline\n");
+		//printk(KERN_WARNING "PSEE VIDEO stopping the pipeline\n");
 		if (--pipe->stream_count == 0) {
 			psee_pipeline_start_stop(pipe, false);
-			printk(KERN_WARNING "PSEE VIDEO stopped the pipeline\n");
+			//printk(KERN_WARNING "PSEE VIDEO stopped the pipeline\n");
 		}
 	}
 
@@ -445,7 +445,7 @@ struct psee_dma_buffer {
 
 static void psee_dma_complete(void *param, const struct dmaengine_result *result)
 {
-	printk(KERN_WARNING "PSEE DMA DMA COMPLETE\n");
+	//printk(KERN_WARNING "PSEE DMA DMA COMPLETE\n");
 	struct psee_dma_buffer *buf = param;
 	struct psee_dma *dma = buf->dma;
 
@@ -492,7 +492,7 @@ static int buffer_prepare(struct vb2_buffer *vb)
 
 static void buffer_queue(struct vb2_buffer *vb)
 {
-	printk(KERN_WARNING "PSEE DMA BUFFER QUEUE\n");
+	//printk(KERN_WARNING "PSEE DMA BUFFER QUEUE\n");
 	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
 	struct psee_dma *dma = vb2_get_drv_priv(vb->vb2_queue);
 	struct psee_dma_buffer *buf = to_psee_dma_buffer(vbuf);
@@ -534,7 +534,7 @@ static void buffer_queue(struct vb2_buffer *vb)
 
 static int start_streaming(struct vb2_queue *vq, unsigned int count)
 {
-	printk(KERN_WARNING "PSEE DMA START STREAMING\n");
+	//printk(KERN_WARNING "PSEE DMA START STREAMING\n");
 	struct psee_dma *dma = vb2_get_drv_priv(vq);
 	struct psee_dma_buffer *buf, *nbuf;
 	struct psee_pipeline *pipe;
@@ -579,7 +579,7 @@ static int start_streaming(struct vb2_queue *vq, unsigned int count)
 	/* Enable the packetizer */
 	control = (union global_ctrl){ .enable = 1 };
 	write_reg(dma, REG_CONTROL, control.raw);
-	printk(KERN_WARNING "PSEE DMA STARTED PACKETIZER\n");
+	//printk(KERN_WARNING "PSEE DMA STARTED PACKETIZER\n");
 	return 0;
 
 error_stop:
@@ -605,32 +605,32 @@ static void stop_streaming(struct vb2_queue *vq)
 	union global_ctrl control = { .enable = 0, .clear = 1 };
 
 	/* Stop the pipeline. */
-	printk(KERN_WARNING "PSEE VIDEO stop streaming to psee pipeline\n");
+	//printk(KERN_WARNING "PSEE VIDEO stop streaming to psee pipeline\n");
 	psee_pipeline_set_stream(pipe, false);
 
 	/* Disable packetizer and clear its memories */
-	printk(KERN_WARNING "PSEE VIDEO stop streaming writing control\n");
+	//printk(KERN_WARNING "PSEE VIDEO stop streaming writing control\n");
 	write_reg(dma, REG_CONTROL, control.raw);
 
 	/* Stop and reset the DMA engine. */
-	printk(KERN_WARNING "PSEE VIDEO stop streaming killing dmas\n");
+	//printk(KERN_WARNING "PSEE VIDEO stop streaming killing dmas\n");
 	dmaengine_terminate_all(dma->dma);
 
 	/* Cleanup the pipeline and mark it as being stopped. */
-	printk(KERN_WARNING "PSEE VIDEO stop streaming cleaning\n");
+	//printk(KERN_WARNING "PSEE VIDEO stop streaming cleaning\n");
 	psee_pipeline_cleanup(pipe);
-	printk(KERN_WARNING "PSEE VIDEO stop streaming for realsies\n");
+	//printk(KERN_WARNING "PSEE VIDEO stop streaming for realsies\n");
 	video_device_pipeline_stop(&dma->video);
 
 	/* Give back all queued buffers to videobuf2. */
-	printk(KERN_WARNING "PSEE VIDEO stop streaming returning buffers\n");
+	//printk(KERN_WARNING "PSEE VIDEO stop streaming returning buffers\n");
 	spin_lock_irq(&dma->queued_lock);
 	list_for_each_entry_safe(buf, nbuf, &dma->queued_bufs, queue) {
 		vb2_buffer_done(&buf->buf.vb2_buf, VB2_BUF_STATE_ERROR);
 		list_del(&buf->queue);
 	}
 	spin_unlock_irq(&dma->queued_lock);
-	printk(KERN_WARNING "PSEE VIDEO stop streaming done\n");
+	//printk(KERN_WARNING "PSEE VIDEO stop streaming done\n");
 }
 
 static const struct vb2_ops queue_qops = {
@@ -895,7 +895,7 @@ static int timeout_s_ctrl(struct v4l2_ctrl *ctrl)
 		timeout = ctrl->val;
 		timeout *= clk_get_rate(dma->clk);
 		timeout = div_u64(timeout, 1000000);///= 1000000; /* val is in us */
-		printk(KERN_WARNING "PSEE TIMEOUT: %d\n", timeout);
+		//printk(KERN_WARNING "PSEE TIMEOUT: %d\n", timeout);
 		write_reg(dma, REG_TLAST_TIMEOUT, timeout);
 		return 0;
 	default:

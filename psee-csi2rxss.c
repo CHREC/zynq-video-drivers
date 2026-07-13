@@ -501,7 +501,6 @@ static struct v4l2_subdev *xcsi2rxss_get_remote_subdev(struct media_pad *local)
 static int xcsi2rxss_start_stream(struct xcsi2rxss_state *state)
 {
 	int ret = 0;
-	printk(KERN_WARNING "CSI RX STREAM STARTING");
 	/* enable core */
 	xcsi2rxss_set(state, XCSI_CCR_OFFSET, XCSI_CCR_ENABLE);
 
@@ -520,7 +519,6 @@ static int xcsi2rxss_start_stream(struct xcsi2rxss_state *state)
 	xcsi2rxss_set(state, XCSI_GIER_OFFSET, XCSI_GIER_GIE);
 
 	state->streaming = true;
-	printk(KERN_WARNING "CSI RX STREAM STARTING RETURN");
 	return ret;
 }
 
@@ -1027,7 +1025,6 @@ err_ep_put:
 
 static int xcsi2rxss_probe(struct platform_device *pdev)
 {
-		printk(KERN_WARNING "XCSI2RXSS PROBE 1\n");
 
 	struct v4l2_subdev *subdev;
 	struct xcsi2rxss_state *xcsi2rxss;
