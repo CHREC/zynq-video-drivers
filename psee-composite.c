@@ -583,7 +583,7 @@ static int psee_composite_probe(struct platform_device *platform_dev)
 	platform_set_drvdata(platform_dev, pdev);
 
 	dev_info(pdev->dev, "device registered\n");
-	printk(KERN_WARNING "ZYNQ VIDEO DRIVERS:\t0x%08X\n", ZYNQGIT_VER);
+	// printk(KERN_WARNING "ZYNQ VIDEO DRIVERS:\t0x%08X\n", ZYNQGIT_VER);
 	return 0;
 
 error:
